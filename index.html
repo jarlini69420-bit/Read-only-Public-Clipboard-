@@ -146,6 +146,7 @@ body {
     <div class="sync-dot" id="sync-dot" title="Load status"></div>
     <button class="icon-btn" id="add-btn" title="Add Clip"><i class="ti ti-plus"></i></button>
     <button class="icon-btn" id="edit-mode-btn" title="Toggle Edit Mode"><i class="ti ti-pencil"></i></button>
+    <button class="icon-btn" id="download-btn" title="Download updated contents.json"><i class="ti ti-download"></i></button>
     <button class="icon-btn" id="refresh-btn" title="Reset to Original JSON"><i class="ti ti-refresh"></i></button>
     <button class="icon-btn" id="theme-toggle" title="Toggle theme"><i class="ti ti-sun" id="theme-icon"></i></button>
   </div>
@@ -234,6 +235,21 @@ async function loadClips(forceReset = false) {
   }
 }
 
+// ── Download contents.json ────────────────────────────────────
+function downloadJson() {
+  const jsonStr = JSON.stringify(clips, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const dlAnchor = document.createElement('a');
+  dlAnchor.href = url;
+  dlAnchor.download = 'contents.json';
+  document.body.appendChild(dlAnchor);
+  dlAnchor.click();
+  dlAnchor.remove();
+  URL.revokeObjectURL(url);
+  showToast('Downloaded contents.json!');
+}
+
 // ── Toast ─────────────────────────────────────────────────────
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -303,6 +319,8 @@ document.getElementById('add-btn').addEventListener('click', () => {
   render();
   showToast('Clip added!');
 });
+
+document.getElementById('download-btn').addEventListener('click', downloadJson);
 
 document.getElementById('refresh-btn').addEventListener('click', () => {
   if (confirm('Reset clips back to original JSON source? Local edits will be cleared.')) {
