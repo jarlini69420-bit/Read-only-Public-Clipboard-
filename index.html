@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Read-only Clipboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:            #1a1a1a;
+  --surface-1:     #262626;
+  --surface-2:     #2e2e2e;
+  --border:        rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.14);
+  --text-primary:  #e8e8e6;
+  --text-secondary:#a0a09a;
+  --text-muted:    #686864;
+  --text-accent:   #6b9fd4;
+  --green:         #4ade80;
+  --red:           #f87171;
+  --radius:        8px;
+}
+:root.light-mode {
+  --bg:            #f5f5f7;
+  --surface-1:     #f0f0f2;
+  --surface-2:     #ffffff;
+  --border:        rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.15);
+  --text-primary:  #1d1d1f;
+  --text-secondary:#515154;
+  --text-muted:    #86868b;
+  --text-accent:   #1d4ed8;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg); color: var(--text-primary);
+  min-height: 100vh; transition: background 0.2s, color 0.2s;
+}
+
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem; border-bottom: 0.5px solid var(--border); gap: 12px;
+}
+.header-left h1 { font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 7px; }
+.header-left .hint { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.header-controls { display: flex; align-items: center; gap: 8px; }
+
+.sync-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--text-muted); transition: background 0.3s; flex-shrink: 0;
+}
+.sync-dot.ok   { background: var(--green); }
+.sync-dot.err  { background: var(--red); }
+.sync-dot.busy { background: #facc15; animation: pulse 0.8s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.icon-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); padding: 4px 6px; border-radius: 6px;
+  font-size: 15px; line-height: 1;
+  display: flex; align-items: center; gap: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.icon-btn:hover { color: var(--text-primary); background: var(--surface-1); }
+.icon-btn.active { color: var(--text-accent); }
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px; padding: 1rem 1.25rem;
+}
+
+.clip-card {
+  background: var(--surface-2); border: 0.5px solid var(--border);
+  border-radius: 12px; padding: 12px 14px; min-height: 120px;
+  display: flex; flex-direction: column; gap: 8px;
+  cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
+  user-select: none; position: relative;
+}
+.clip-card:hover { border-color: var(--border-strong); }
+.clip-card.spoiler .clip-text { filter: blur(5px); user-select: none; }
+
+.clip-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--text-accent); text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px;
+}
+.clip-label::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-accent); flex-shrink: 0;
+}
+
+.clip-text {
+  flex: 1; font-size: 13px; line-height: 1.55;
+  color: var(--text-primary); white-space: pre-wrap; word-break: break-word;
+  min-height: 48px; transition: filter 0.2s;
+}
+.clip-text.empty { color: var(--text-muted); font-style: italic; }
+
+.actions {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 22px;
+}
+.actions-left, .actions-right { display: flex; align-items: center; gap: 4px; }
+
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--surface-2); border: 0.5px solid var(--border-strong);
+  border-radius: var(--radius); padding: 8px 16px;
+  font-size: 13px; color: var(--text-primary);
+  opacity: 0; transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none; white-space: nowrap; z-index: 999;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.empty-state {
+  grid-column: 1 / -1; text-align: center; padding: 3rem 1rem;
+  color: var(--text-muted); font-size: 14px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1><i class="ti ti-clipboard"></i> Read-only Clipboard</h1>
+    <div class="hint" id="action-hint">Tap card to copy</div>
+  </div>
+  <div class="header-controls">
+    <div class="sync-dot" id="sync-dot" title="Load status"></div>
+    <button class="icon-btn" id="refresh-btn" title="Refresh from GitHub"><i class="ti ti-refresh"></i></button>
+    <button class="icon-btn" id="theme-toggle" title="Toggle theme"><i class="ti ti-sun" id="theme-icon"></i></button>
+  </div>
+</div>
+
+<div class="board" id="board"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ───────────────────────────────────────────────────
+// Replace with your GitHub raw URL, e.g.:
+// https://raw.githubusercontent.com/USERNAME/REPO/main/clipdata.json
+const GITHUB_JSON_URL = 'https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/clipdata.json';
+
+// Expected JSON shapes (array):
+//   [ "plain text", ... ]
+//   or [ { "text": "...", "label": "My Label", "spoiler": true }, ... ]
+// label is optional — falls back to Clip A / B / C ...
+
+const LABELS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const isDesktop = window.matchMedia('(pointer: fine)').matches;
+document.getElementById('action-hint').textContent =
+  isDesktop ? 'Click card to copy' : 'Tap card to copy';
+
+// ── State ─────────────────────────────────────────────────────
+let clips = [];
+const revealedSet = new Set();
+
+// ── Sync dot ──────────────────────────────────────────────────
+const syncDot = document.getElementById('sync-dot');
+function setSyncStatus(s) { syncDot.className = 'sync-dot' + (s ? ' ' + s : ''); }
+
+// ── Normalize ─────────────────────────────────────────────────
+function normalizeClips(data) {
+  if (!Array.isArray(data)) return [];
+  return data.map((item, i) => {
+    if (typeof item === 'string') {
+      return { text: item, label: 'Clip ' + (LABELS[i] || (i + 1)), spoiler: false };
+    }
+    if (item && typeof item === 'object') {
+      return {
+        text: item.text || '',
+        label: item.label || ('Clip ' + (LABELS[i] || (i + 1))),
+        spoiler: !!item.spoiler
+      };
+    }
+    return { text: '', label: 'Clip ' + (LABELS[i] || (i + 1)), spoiler: false };
+  });
+}
+
+// ── Fetch ─────────────────────────────────────────────────────
+async function loadClips() {
+  try {
+    setSyncStatus('busy');
+    const res = await fetch(GITHUB_JSON_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    clips = normalizeClips(data);
+    revealedSet.clear();
+    setSyncStatus('ok');
+    render();
+  } catch (err) {
+    setSyncStatus('err');
+    showToast('Failed to load JSON');
+    console.error(err);
+    if (clips.length === 0) render();
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── Copy ──────────────────────────────────────────────────────
+function executeCopy(text) {
+  if (!text) return;
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('Copied!'))
+      .catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('Copied!');
+  } catch {
+    showToast('Copy failed');
+  }
+  document.body.removeChild(ta);
+}
+
+// ── Theme ─────────────────────────────────────────────────────
+const htmlEl = document.documentElement;
+const themeIcon = document.getElementById('theme-icon');
+let isLight = localStorage.getItem('theme') === 'light';
+function updateTheme() {
+  htmlEl.classList.toggle('light-mode', isLight);
+  themeIcon.className = isLight ? 'ti ti-moon' : 'ti ti-sun';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  isLight = !isLight;
+  updateTheme();
+});
+updateTheme();
+
+// ── Refresh ───────────────────────────────────────────────────
+document.getElementById('refresh-btn').addEventListener('click', () => loadClips());
+
+// ── Render ────────────────────────────────────────────────────
+function render() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+
+  if (clips.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = 'No clips loaded. Check the GitHub URL or hit refresh.';
+    board.appendChild(empty);
+    return;
+  }
+
+  clips.forEach((clip, i) => {
+    const isSpoilered = clip.spoiler && !revealedSet.has(i);
+
+    const card = document.createElement('div');
+    card.className = 'clip-card' + (isSpoilered ? ' spoiler' : '');
+
+    // Label that points to this clip
+    const labelEl = document.createElement('div');
+    labelEl.className = 'clip-label';
+    labelEl.textContent = clip.label;
+
+    // Text content
+    const textEl = document.createElement('div');
+    textEl.className = 'clip-text' + (clip.text ? '' : ' empty');
+    textEl.textContent = clip.text || '(empty)';
+
+    // Actions
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    const actLeft = document.createElement('div');
+    actLeft.className = 'actions-left';
+    const actRight = document.createElement('div');
+    actRight.className = 'actions-right';
+
+    if (clip.spoiler) {
+      const spoilerBtn = document.createElement('button');
+      spoilerBtn.className = 'icon-btn' + (revealedSet.has(i) ? ' active' : '');
+      spoilerBtn.title = revealedSet.has(i) ? 'Hide again' : 'Reveal';
+      spoilerBtn.innerHTML = `<i class="ti ${revealedSet.has(i) ? 'ti-eye' : 'ti-eye-off'}"></i>`;
+      spoilerBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (revealedSet.has(i)) revealedSet.delete(i);
+        else revealedSet.add(i);
+        render();
+      });
+      actLeft.appendChild(spoilerBtn);
+    }
+
+    if (clip.text) {
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'icon-btn';
+      copyBtn.title = 'Copy';
+      copyBtn.innerHTML = '<i class="ti ti-copy"></i>';
+      copyBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        executeCopy(clip.text);
+      });
+      actRight.appendChild(copyBtn);
+    }
+
+    actions.append(actLeft, actRight);
+    card.append(labelEl, textEl, actions);
+
+    // Whole card copies on click/tap
+    card.addEventListener('click', () => {
+      if (clip.text) executeCopy(clip.text);
+    });
+
+    board.appendChild(card);
+  });
+}
+
+// ── Start ─────────────────────────────────────────────────────
+loadClips();
+</script>
+</body>
+</html>
