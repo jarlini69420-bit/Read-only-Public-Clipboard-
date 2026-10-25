@@ -23,5 +23,15 @@
     "text": "local n=0 for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory()) do if v.str:find(\"--M\",1,true) and not v.str:find(\"--RUN\",1,true) then n=n+1 local ok,e=pcall(function() if v.remote then local x,_,z=TheSim:ProjectScreenPos(TheSim:GetPosition()) TheNet:SendRemoteExecute(v.str,x,z) else ExecuteConsoleCommand(v.str) end end) if not ok then Networking_SystemMessage(\"MWRUN: \"..tostring(e)) end end end Networking_SystemMessage(\"MWRUN ran \"..n) --RUN",
     "label": "Run all --M Tagged commands",
     "spoiler": false
+  },
+  {
+    "text": "ConsoleScreenSettings:Reset()",
+    "label": "Deletes commands without --M tags, run this before the commands get overwritten by your other commands",
+    "spoiler": false
+  },
+  {
+    "text": "ConsoleScreenSettings:Reset()",
+    "label": "Resets the Entire Console History! Only use this if you updated, you will need to rerun all commands you like after running this. ",
+    "spoiler": false
   }
 ]
