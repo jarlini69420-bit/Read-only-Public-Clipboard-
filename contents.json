@@ -25,6 +25,11 @@
     "spoiler": false
   },
   {
+  "text": "local m = getmetatable(TheWorld.Map).__index; m.OrigLerp = m.OrigLerp or m.SetOverlayLerp; m.OrigLerp(TheWorld.Map, 0); m.SetOverlayLerp = function() end --M",
+  "label": "6 Winter Snow Turf Remover",
+  "spoiler": false
+  },
+  {
     "text": "local h=ConsoleScreenSettings:GetConsoleHistory() for i=#h,1,-1 do if not (h[i].str:find(\"--M\",1,true) or h[i].str:find(\"--RUN\",1,true)) then table.remove(h,i) end end ConsoleScreenSettings.dirty=true ConsoleScreenSettings:Save() --RUN",
     "label": "Misc (Local -toggle off Remote before running) Deletes commands without --M tags, run this before the commands get overwritten by your other commands",
     "spoiler": false
