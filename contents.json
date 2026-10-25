@@ -1,37 +1,37 @@
 [
   {
     "text": "local I=require(\"components/inventory\") I.OrigGNAS=I.OrigGNAS or I.GetNextAvailableSlot I.GetNextAvailableSlot=function(self,item) if item and item.components and item.components.equippable and not item.components.stackable then for k=self.maxslots,1,-1 do if self.itemslots[k]==nil and (not self.CanTakeItemInSlot or self:CanTakeItemInSlot(item,k)) then return k,self.itemslots end end end return I.OrigGNAS(self,item) end --M",
-    "label": "1 sort equipment to right",
+    "label": "1 (Remote) sort equipment to right",
     "spoiler": false
   },
   {
     "text": "local IB,Tx,P,S=require(\"widgets/imagebutton\"),require(\"widgets/text\"),ThePlayer,1.25 local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition() local y=(c.inv.inv[1]:GetWorldPosition().y-34-w.y)/k local x=(W-0.175*H-w.x)/k local g=S*40+5 for _,v in ipairs(P._rot or {}) do v:Kill() end P._rot={} local function T(d) pcall(function() TheCamera:SetHeadingTarget(TheCamera:GetHeadingTarget()+d*45) end) end local function R(d,l,px) local b=c:AddChild(IB(\"images/hud.xml\",\"equip_slot.tex\",\"equip_slot.tex\",\"equip_slot.tex\")) b:SetPosition(px,y) b:SetScale(S) b.image:SetTint(1,1,1,0.5) b:AddChild(Tx(NUMBERFONT,44,l)) local t local o=b.OnControl b.OnControl=function(s,n,dn) if n==CONTROL_ACCEPT or n==CONTROL_PRIMARY then if t then t:Cancel() t=nil end if dn then T(d) t=b.inst:DoPeriodicTask(0.4,function() T(d) end) end return true end return o and o(s,n,dn) end table.insert(P._rot,b) end R(1,\"<\",x-g) R(-1,\">\",x+g) --M",
-    "label": "2 Rotation buttons",
+    "label": "2 (Local -toggle off Remote before running) Rotation buttons",
     "spoiler": false
   },
   {
     "text": "local IB=require(\"widgets/imagebutton\") local Im=require(\"widgets/image\") local P=ThePlayer local V=P.replica.inventory local X,Y=420,-280 local R=P._rot and P._rot[1] if P._qb then P._qb:Kill() end local function pick() local it=V:GetItems() for i=V:GetNumSlots(),1,-1 do local x=it[i] if x and x.replica.equippable then return x end end end local b=P.HUD.controls:AddChild(IB(\"images/hud.xml\",\"equip_slot.tex\",\"equip_slot.tex\",\"equip_slot.tex\")) b:SetPosition(X,Y) b:SetScale(R and R:GetScale().x or 1.25) b.image:SetTint(1,1,1,0.5) local ic=b:AddChild(Im(\"images/hud.xml\",\"equip_slot.tex\")) ic:SetClickable(false) ic:Hide() b.inst:DoPeriodicTask(0.25,function() pcall(function() local x=pick() if x then local i=x.replica.inventoryitem ic:SetTexture(i:GetAtlas(),i:GetImage()) ic:Show() else ic:Hide() end end) end) b:SetOnClick(function() local x=pick() if x then V:UseItemFromInvTile(x) end end) P._qb=b --M",
-    "label": "3 Quick Swap Button, Swaps the right most Equipment in inventory with preview",
+    "label": "3 (Local -toggle off Remote before running) Quick Swap Button, Swaps the right most Equipment in inventory with preview",
     "spoiler": false
   },
   {
     "text": "MWK={\"HOUNDS\",\"WORMS\",\"DEERCLOPS\",\"BEARGER\",\"ANTLION\"} local function red(m) if not pcall(function() ChatHistory:AddToHistory(ChatTypes.SystemMessage,nil,nil,nil,m,{1,0.2,0.2,1},nil,nil,true) end) then Networking_SystemMessage(m) end end local function warn(k) for _,w in ipairs(MWK) do if k:find(w) then return true end end end local T=require(\"components/talker\") T.OrigSay=T.OrigSay or T.Say T.Say=function(self,s,...) pcall(function() if self.inst==ThePlayer and type(s)==\"string\" then for _,n in ipairs({string.upper(self.inst.prefab),\"GENERIC\"}) do for k,v in pairs(STRINGS.CHARACTERS[n] or {}) do if type(k)==\"string\" and warn(k) and (v==s or type(v)==\"table\" and table.contains(v,s)) then red(self.inst:GetDisplayName()..\": \"..s) return end end end end end) return T.OrigSay(self,s,...) end --M",
-    "label": "4 Hounds or boss Event Warnings sent to chat in red text",
+    "label": "4 (Local -toggle off Remote before running) Hounds or boss Event Warnings sent to chat in red text",
     "spoiler": false
   },
   {
     "text": "local n=0 for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory()) do if v.str:find(\"--M\",1,true) and not v.str:find(\"--RUN\",1,true) then n=n+1 local ok,e=pcall(function() if v.remote then local x,_,z=TheSim:ProjectScreenPos(TheSim:GetPosition()) TheNet:SendRemoteExecute(v.str,x,z) else ExecuteConsoleCommand(v.str) end end) if not ok then Networking_SystemMessage(\"MWRUN: \"..tostring(e)) end end end Networking_SystemMessage(\"MWRUN ran \"..n) --RUN",
-    "label": "Run all --M Tagged commands",
+    "label": "5 (Local -toggle off Remote before running) Run all --M Tagged commands",
+    "spoiler": false
+  },
+  {
+    "text": "local h=ConsoleScreenSettings:GetConsoleHistory() for i=#h,1,-1 do if not (h[i].str:find(\"--M\",1,true) or h[i].str:find(\"--RUN\",1,true)) then table.remove(h,i) end end ConsoleScreenSettings.dirty=true ConsoleScreenSettings:Save() --RUN",
+    "label": "Misc (Local -toggle off Remote before running) Deletes commands without --M tags, run this before the commands get overwritten by your other commands",
     "spoiler": false
   },
   {
     "text": "ConsoleScreenSettings:Reset()",
-    "label": "Deletes commands without --M tags, run this before the commands get overwritten by your other commands",
-    "spoiler": false
-  },
-  {
-    "text": "ConsoleScreenSettings:Reset()",
-    "label": "Resets the Entire Console History! Only use this if you updated, you will need to rerun all commands you like after running this. ",
+    "label": "Misc (Local -toggle off Remote before running) Resets the Entire Console History! Only use this if you updated, you will need to rerun all commands you like after running this. ",
     "spoiler": false
   }
 ]
