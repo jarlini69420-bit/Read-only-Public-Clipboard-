@@ -1,10 +1,6 @@
 [
   "plain text clip",
   {
-    "text": "local I=require("components/inventory") I.OrigGNAS=I.OrigGNAS or I.GetNextAvailableSlot I.GetNextAvailableSlot=function(self,item) if item and item.components and item.components.equippable and not item.components.stackable then for k=self.maxslots,1,-1 do if self.itemslots[k]==nil and (not self.CanTakeItemInSlot or self:CanTakeItemInSlot(item,k)) then return k,self.itemslots end end end return I.OrigGNAS(self,item) end --M",
-    "label": "Cmd1: Equipment sorted to right, other items go left as usual"
-  },
-  {
     "text": "another one",
     "label": "Server IP"
   }
