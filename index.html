@@ -195,7 +195,7 @@ async function loadClips() {
     render();
   } catch (err) {
     setSyncStatus('err');
-    showToast('Failed to load JSON');
+    showToast('Failed to load JSON: ' + err);
     console.error(err);
     if (clips.length === 0) render();
   }
