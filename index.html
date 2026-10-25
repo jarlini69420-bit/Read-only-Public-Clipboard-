@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Interactive Clipboard</title>
+<title>Read-only Clipboard</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -65,8 +65,7 @@ body {
   transition: color 0.15s, background 0.15s;
 }
 .icon-btn:hover { color: var(--text-primary); background: var(--surface-1); }
-.icon-btn.active { color: var(--text-accent); background: var(--surface-1); }
-.icon-btn.danger:hover { color: var(--red); }
+.icon-btn.active { color: var(--text-accent); }
 
 .board {
   display: grid;
@@ -88,29 +87,18 @@ body {
   font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
   color: var(--text-accent); text-transform: uppercase;
   display: flex; align-items: center; gap: 6px;
-  outline: none; border-radius: 4px; padding: 2px 4px;
 }
 .clip-label::before {
   content: ""; width: 6px; height: 6px; border-radius: 50%;
   background: var(--text-accent); flex-shrink: 0;
 }
-.clip-label[contenteditable="true"] {
-  background: var(--surface-1);
-  border: 1px dashed var(--border-strong);
-}
 
 .clip-text {
   flex: 1; font-size: 13px; line-height: 1.55;
   color: var(--text-primary); white-space: pre-wrap; word-break: break-word;
-  min-height: 48px; transition: filter 0.2s; outline: none;
-  border-radius: 6px; padding: 4px;
+  min-height: 48px; transition: filter 0.2s;
 }
 .clip-text.empty { color: var(--text-muted); font-style: italic; }
-.clip-text[contenteditable="true"] {
-  background: var(--surface-1);
-  border: 1px dashed var(--border-strong);
-  user-select: text;
-}
 
 .actions {
   display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 22px;
@@ -139,15 +127,12 @@ body {
 
 <div class="header">
   <div class="header-left">
-    <h1><i class="ti ti-clipboard"></i> Interactive Clipboard</h1>
+    <h1><i class="ti ti-clipboard"></i> Read-only Clipboard</h1>
     <div class="hint" id="action-hint">Tap card to copy</div>
   </div>
   <div class="header-controls">
     <div class="sync-dot" id="sync-dot" title="Load status"></div>
-    <button class="icon-btn" id="add-btn" title="Add Clip"><i class="ti ti-plus"></i></button>
-    <button class="icon-btn" id="edit-mode-btn" title="Toggle Edit Mode"><i class="ti ti-pencil"></i></button>
-    <button class="icon-btn" id="download-btn" title="Download updated contents.json"><i class="ti ti-download"></i></button>
-    <button class="icon-btn" id="refresh-btn" title="Reset to Original JSON"><i class="ti ti-refresh"></i></button>
+    <button class="icon-btn" id="refresh-btn" title="Refresh from GitHub"><i class="ti ti-refresh"></i></button>
     <button class="icon-btn" id="theme-toggle" title="Toggle theme"><i class="ti ti-sun" id="theme-icon"></i></button>
   </div>
 </div>
@@ -157,33 +142,27 @@ body {
 
 <script>
 // ── Config ───────────────────────────────────────────────────
+// Replace with your GitHub raw URL, e.g.:
+// https://raw.githubusercontent.com/USERNAME/REPO/main/clipdata.json
 const GITHUB_JSON_URL = './contents.json';
+
+// Expected JSON shapes (array):
+//   [ "plain text", ... ]
+//   or [ { "text": "...", "label": "My Label", "spoiler": true }, ... ]
+// label is optional — falls back to Clip A / B / C ...
+
 const LABELS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const isDesktop = window.matchMedia('(pointer: fine)').matches;
+document.getElementById('action-hint').textContent =
+  isDesktop ? 'Click card to copy' : 'Tap card to copy';
 
 // ── State ─────────────────────────────────────────────────────
 let clips = [];
-let isEditMode = false;
 const revealedSet = new Set();
-
-function updateHint() {
-  const hintEl = document.getElementById('action-hint');
-  if (isEditMode) {
-    hintEl.textContent = 'Edit Mode: Click text or label to edit content';
-  } else {
-    hintEl.textContent = isDesktop ? 'Click card to copy' : 'Tap card to copy';
-  }
-}
-updateHint();
 
 // ── Sync dot ──────────────────────────────────────────────────
 const syncDot = document.getElementById('sync-dot');
 function setSyncStatus(s) { syncDot.className = 'sync-dot' + (s ? ' ' + s : ''); }
-
-// ── Local Storage Helpers ─────────────────────────────────────
-function saveToLocalStorage() {
-  localStorage.setItem('local_clips', JSON.stringify(clips));
-}
 
 // ── Normalize ─────────────────────────────────────────────────
 function normalizeClips(data) {
@@ -203,51 +182,23 @@ function normalizeClips(data) {
   });
 }
 
-// ── Fetch or Load ─────────────────────────────────────────────
-async function loadClips(forceReset = false) {
-  const localData = localStorage.getItem('local_clips');
-  if (!forceReset && localData) {
-    try {
-      clips = JSON.parse(localData);
-      setSyncStatus('ok');
-      render();
-      return;
-    } catch(e) {
-      console.warn('Local storage data invalid, falling back to fetch.');
-    }
-  }
-
+// ── Fetch ─────────────────────────────────────────────────────
+async function loadClips() {
   try {
     setSyncStatus('busy');
     const res = await fetch(GITHUB_JSON_URL + '?t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     clips = normalizeClips(data);
-    saveToLocalStorage();
     revealedSet.clear();
     setSyncStatus('ok');
     render();
   } catch (err) {
     setSyncStatus('err');
-    showToast('Failed to load JSON: ' + err);
+    showToast('Failed to load JSON');
     console.error(err);
     if (clips.length === 0) render();
   }
-}
-
-// ── Download contents.json ────────────────────────────────────
-function downloadJson() {
-  const jsonStr = JSON.stringify(clips, null, 2);
-  const blob = new Blob([jsonStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const dlAnchor = document.createElement('a');
-  dlAnchor.href = url;
-  dlAnchor.download = 'contents.json';
-  document.body.appendChild(dlAnchor);
-  dlAnchor.click();
-  dlAnchor.remove();
-  URL.revokeObjectURL(url);
-  showToast('Downloaded contents.json!');
 }
 
 // ── Toast ─────────────────────────────────────────────────────
@@ -292,7 +243,7 @@ let isLight = localStorage.getItem('theme') === 'light';
 function updateTheme() {
   htmlEl.classList.toggle('light-mode', isLight);
   themeIcon.className = isLight ? 'ti ti-moon' : 'ti ti-sun';
-  localStorage.setItem('theme', isLight ? 'dark' : 'light');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
 }
 document.getElementById('theme-toggle').addEventListener('click', () => {
   isLight = !isLight;
@@ -300,33 +251,8 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 });
 updateTheme();
 
-// ── Edit Controls ─────────────────────────────────────────────
-document.getElementById('edit-mode-btn').addEventListener('click', () => {
-  isEditMode = !isEditMode;
-  document.getElementById('edit-mode-btn').classList.toggle('active', isEditMode);
-  updateHint();
-  render();
-});
-
-document.getElementById('add-btn').addEventListener('click', () => {
-  const nextIdx = clips.length;
-  clips.push({
-    text: 'New Clip Content',
-    label: 'Clip ' + (LABELS[nextIdx] || (nextIdx + 1)),
-    spoiler: false
-  });
-  saveToLocalStorage();
-  render();
-  showToast('Clip added!');
-});
-
-document.getElementById('download-btn').addEventListener('click', downloadJson);
-
-document.getElementById('refresh-btn').addEventListener('click', () => {
-  if (confirm('Reset clips back to original JSON source? Local edits will be cleared.')) {
-    loadClips(true);
-  }
-});
+// ── Refresh ───────────────────────────────────────────────────
+document.getElementById('refresh-btn').addEventListener('click', () => loadClips());
 
 // ── Render ────────────────────────────────────────────────────
 function render() {
@@ -336,42 +262,26 @@ function render() {
   if (clips.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = 'No clips found. Tap "+" to create one or refresh.';
+    empty.textContent = 'No clips loaded. Check the GitHub URL or hit refresh.';
     board.appendChild(empty);
     return;
   }
 
   clips.forEach((clip, i) => {
-    const isSpoilered = clip.spoiler && !revealedSet.has(i) && !isEditMode;
+    const isSpoilered = clip.spoiler && !revealedSet.has(i);
 
     const card = document.createElement('div');
     card.className = 'clip-card' + (isSpoilered ? ' spoiler' : '');
 
-    // Editable Label
+    // Label that points to this clip
     const labelEl = document.createElement('div');
     labelEl.className = 'clip-label';
     labelEl.textContent = clip.label;
-    if (isEditMode) {
-      labelEl.contentEditable = "true";
-      labelEl.addEventListener('click', e => e.stopPropagation());
-      labelEl.addEventListener('blur', () => {
-        clip.label = labelEl.textContent.trim() || ('Clip ' + (LABELS[i] || (i + 1)));
-        saveToLocalStorage();
-      });
-    }
 
-    // Editable Text Content
+    // Text content
     const textEl = document.createElement('div');
     textEl.className = 'clip-text' + (clip.text ? '' : ' empty');
-    textEl.textContent = clip.text || (isEditMode ? 'Type text here...' : '(empty)');
-    if (isEditMode) {
-      textEl.contentEditable = "true";
-      textEl.addEventListener('click', e => e.stopPropagation());
-      textEl.addEventListener('blur', () => {
-        clip.text = textEl.textContent.trim();
-        saveToLocalStorage();
-      });
-    }
+    textEl.textContent = clip.text || '(empty)';
 
     // Actions
     const actions = document.createElement('div');
@@ -381,45 +291,21 @@ function render() {
     const actRight = document.createElement('div');
     actRight.className = 'actions-right';
 
-    // Spoiler Button
-    if (clip.spoiler || isEditMode) {
+    if (clip.spoiler) {
       const spoilerBtn = document.createElement('button');
-      spoilerBtn.className = 'icon-btn' + (clip.spoiler ? ' active' : '');
-      spoilerBtn.title = clip.spoiler ? 'Disable Spoiler' : 'Enable Spoiler';
-      spoilerBtn.innerHTML = `<i class="ti ${clip.spoiler ? 'ti-eye-off' : 'ti-eye'}"></i>`;
+      spoilerBtn.className = 'icon-btn' + (revealedSet.has(i) ? ' active' : '');
+      spoilerBtn.title = revealedSet.has(i) ? 'Hide again' : 'Reveal';
+      spoilerBtn.innerHTML = `<i class="ti ${revealedSet.has(i) ? 'ti-eye' : 'ti-eye-off'}"></i>`;
       spoilerBtn.addEventListener('click', e => {
         e.stopPropagation();
-        if (isEditMode) {
-          clip.spoiler = !clip.spoiler;
-          saveToLocalStorage();
-          render();
-        } else {
-          if (revealedSet.has(i)) revealedSet.delete(i);
-          else revealedSet.add(i);
-          render();
-        }
+        if (revealedSet.has(i)) revealedSet.delete(i);
+        else revealedSet.add(i);
+        render();
       });
       actLeft.appendChild(spoilerBtn);
     }
 
-    // Delete Button (Edit Mode)
-    if (isEditMode) {
-      const delBtn = document.createElement('button');
-      delBtn.className = 'icon-btn danger';
-      delBtn.title = 'Delete Clip';
-      delBtn.innerHTML = '<i class="ti ti-trash"></i>';
-      delBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        clips.splice(i, 1);
-        saveToLocalStorage();
-        render();
-        showToast('Clip deleted');
-      });
-      actLeft.appendChild(delBtn);
-    }
-
-    // Copy Button
-    if (clip.text && !isEditMode) {
+    if (clip.text) {
       const copyBtn = document.createElement('button');
       copyBtn.className = 'icon-btn';
       copyBtn.title = 'Copy';
@@ -434,9 +320,9 @@ function render() {
     actions.append(actLeft, actRight);
     card.append(labelEl, textEl, actions);
 
-    // Click card to copy when not in edit mode
+    // Whole card copies on click/tap
     card.addEventListener('click', () => {
-      if (!isEditMode && clip.text) executeCopy(clip.text);
+      if (clip.text) executeCopy(clip.text);
     });
 
     board.appendChild(card);
