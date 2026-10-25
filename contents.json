@@ -26,7 +26,7 @@
   },
   {
   "text": "local m = getmetatable(TheWorld.Map).__index; m.OrigLerp = m.OrigLerp or m.SetOverlayLerp; m.OrigLerp(TheWorld.Map, 0); m.SetOverlayLerp = function() end --M",
-  "label": "6 Winter Snow Turf Remover",
+  "label": "6 (Local -toggle off Remote before running) Winter Snow Turf Remover",
   "spoiler": false
   },
   {
