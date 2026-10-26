@@ -44,4 +44,29 @@
     "label": "Sample prompt to update the button cmds, attach your own screenshot to ai and the command you want to update",
     "spoiler": false
   }
+  {
+  "text": "MW_MODE=false function MW_Dest(P,inv,c,it) local ov=inv:GetOverflowContainer() local ovi=ov and ov.inst local pot,best,bs for k in pairs(inv:GetOpenContainers()) do local r=k.replica.container if r and k~=P and k~=ovi and not (r.IsReadOnlyContainer and r:IsReadOnlyContainer()) then if k.prefab:find(\"cookpot\") then pot=k elseif r:CanTakeItemInSlot(it) then local sc=(k.prefab==\"icebox\" or k.prefab==\"saltbox\") and 2 or 1 for _,v in pairs(r:GetItems()) do if v.prefab==it.prefab then sc=3 end end if not bs or sc>bs then best,bs=k,sc end end end end if MW_MODE==\"top\" then if c.inst==pot then return P,false end if pot and pot.replica.container:CanTakeItemInSlot(it) then return pot,true end return nil end if c==inv or c==ov then return best,false end return P,false end --M",
+  "label": "7.1 (Local) Single tap toggle to move items from and to crockpot/storage boxes (This mod cmd is 5 commands long, run in proper order)",
+  "spoiler": false
+  },
+  {
+  "text": "function MW_Move(s) local P=ThePlayer local inv=P.replica.inventory local c,n=s.container,s.num local it=c:GetItemInSlot(n) if not it then return end local d,one=MW_Dest(P,inv,c,it) if not d or d==c.inst then TheFocalPoint.SoundEmitter:PlaySound(\"dontstarve/HUD/click_negative\") return end local dm=P.HUD.controls.inv:GetDropMode() local st=it.replica.stackable local z=st and st:StackSize() or 1 if one or dm==DROP_MODES.ONE then c:MoveItemFromCountOfSlot(n,d,1) elseif dm==DROP_MODES.HALF then c:MoveItemFromCountOfSlot(n,d,math.max(1,math.floor(z/2))) else c:MoveItemFromAllOfSlot(n,d) end TheFocalPoint.SoundEmitter:PlaySound(\"dontstarve/HUD/click_object\") end --M",
+  "label": "7.2 (Local) Single tap toggle to move items from and to crockpot/storage boxes (2/5)",
+  "spoiler": false
+  },
+  {
+  "text": "function MW_Open(m) local P=ThePlayer local inv=P.replica.inventory local ov=inv:GetOverflowContainer() local ovi=ov and ov.inst for k in pairs(inv:GetOpenContainers()) do if k~=P and k~=ovi and k.replica.container and (k.prefab:find(\"cookpot\")~=nil)==(m==\"top\") then return true end end return false end local I=require(\"widgets/invslot\") I.OrigTE=I.OrigTE or I.OnTouchEnd I.OrigDT=I.OrigDT or I.OnDoubleTap I.OnTouchEnd=function(s,id,x,y) if MW_MODE and s.touchID==id and s.tile and s.tile.item and ThePlayer.replica.inventory:GetActiveItem()==nil then s.touchID=nil local ok,e=pcall(MW_Move,s) if not ok then Networking_SystemMessage(\"MW move: \"..tostring(e)) end return end return I.OrigTE(s,id,x,y) end I.OnDoubleTap=function(s,x,y) if MW_MODE then return true end return I.OrigDT(s,x,y) end --M",
+  "label": "7.3 (Local) Single tap toggle to move items from and to crockpot/storage boxes (3/5)",
+  "spoiler": false
+  },
+  {
+  "text": "function MW_Tint() for _,v in ipairs(ThePlayer._mw or {}) do v.image:SetTint(1,1,1,v.m==MW_MODE and 1 or 0.5) end end function MW_Watch() local P=ThePlayer if MW_MODE then if MW_Open(MW_MODE) then P._sn=true elseif P._sn then MW_MODE=false MW_Tint() end end end --M",
+  "label": "7.4 (Local) Single tap toggle to move items from and to crockpot/storage boxes (4/5)",
+  "spoiler": false
+  },
+  {
+  "text": "local IB,Tx,P=require(\"widgets/imagebutton\"),require(\"widgets/text\"),ThePlayer local c=P.HUD.controls local _,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition() local q=c.inv.drop_mode_button:GetWorldPosition() local S=P._rot and P._rot[1] and P._rot[1]:GetScale().x or 1.25 for _,v in ipairs(P._mw or {}) do v:Kill() end P._mw={} local function mk(l,m,off) local b=c:AddChild(IB(\"images/hud.xml\",\"equip_slot.tex\",\"equip_slot.tex\",\"equip_slot.tex\")) b:SetPosition((q.x-off*H-w.x)/k,(q.y-w.y)/k) b:SetScale(S) b.image:SetTint(1,1,1,0.5) b:AddChild(Tx(NUMBERFONT,34,l)) b.m=m b:SetOnClick(function() MW_MODE=(MW_MODE~=m) and m or false P._sn=false MW_Tint() end) table.insert(P._mw,b) end mk(\"BOX\",\"bottom\",0.13) mk(\"POT\",\"top\",0.24) P._mw[1].inst:DoPeriodicTask(0.5,function() pcall(MW_Watch) end) --M",
+  "label": "7.5 (Local) Single tap toggle to move items from and to crockpot/storage boxes (5/5)",
+  "spoiler": false
+  }
 ]
