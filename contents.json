@@ -30,11 +30,6 @@
   "spoiler": false
   },
   {
-    "text": "local h=ConsoleScreenSettings:GetConsoleHistory() for i=#h,1,-1 do if not (h[i].str:find(\"--M\",1,true) or h[i].str:find(\"--RUN\",1,true)) then table.remove(h,i) end end ConsoleScreenSettings.dirty=true ConsoleScreenSettings:Save() --RUN",
-    "label": "Misc (Local -toggle off Remote before running) Deletes commands without --M tags, run this before the commands get overwritten by your other commands",
-    "spoiler": false
-  },
-  {
   "text": "MW_MODE=false function MW_Dest(P,inv,c,it) local ov=inv:GetOverflowContainer() local ovi=ov and ov.inst local pot,best,bs for k in pairs(inv:GetOpenContainers()) do local r=k.replica.container if r and k~=P and k~=ovi and not (r.IsReadOnlyContainer and r:IsReadOnlyContainer()) then if k.prefab:find(\"cookpot\") then pot=k elseif r:CanTakeItemInSlot(it) then local sc=(k.prefab==\"icebox\" or k.prefab==\"saltbox\") and 2 or 1 for _,v in pairs(r:GetItems()) do if v.prefab==it.prefab then sc=3 end end if not bs or sc>bs then best,bs=k,sc end end end end if MW_MODE==\"top\" then if c.inst==pot then return P,false end if pot and pot.replica.container:CanTakeItemInSlot(it) then return pot,true end return nil end if c==inv or c==ov then return best,false end return P,false end --M",
   "label": "7.1 (Local) Single tap toggle to move items from and to crockpot/storage boxes (This mod cmd is 5 commands long, run in proper order)",
   "spoiler": false
@@ -58,6 +53,21 @@
   "text": "local IB,Tx,P=require(\"widgets/imagebutton\"),require(\"widgets/text\"),ThePlayer local c=P.HUD.controls local _,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition() local q=c.inv.drop_mode_button:GetWorldPosition() local S=P._rot and P._rot[1] and P._rot[1]:GetScale().x or 1.25 for _,v in ipairs(P._mw or {}) do v:Kill() end P._mw={} local function mk(l,m,off) local b=c:AddChild(IB(\"images/hud.xml\",\"equip_slot.tex\",\"equip_slot.tex\",\"equip_slot.tex\")) b:SetPosition((q.x-off*H-w.x)/k,(q.y-w.y)/k) b:SetScale(S) b.image:SetTint(1,1,1,0.5) b:AddChild(Tx(NUMBERFONT,34,l)) b.m=m b:SetOnClick(function() MW_MODE=(MW_MODE~=m) and m or false P._sn=false MW_Tint() end) table.insert(P._mw,b) end mk(\"BOX\",\"bottom\",0.13) mk(\"POT\",\"top\",0.24) P._mw[1].inst:DoPeriodicTask(0.5,function() pcall(MW_Watch) end) --M",
   "label": "7.5 (Local) Single tap toggle to move items from and to crockpot/storage boxes (5/5)",
   "spoiler": false
+  },
+  {
+  "text": "TheSim:GetPersistentString(\"mw_macro\",function(ok,s) if not ok then Networking_SystemMessage(\"no saved macro\") return end local n=0 for l in s:gmatch(\"[^\\n]+\") do local c=l:sub(2) n=n+1 local o,e=pcall(function() if l:sub(1,1)==\"R\" then local x,_,z=TheSim:ProjectScreenPos(TheSim:GetPosition()) TheNet:SendRemoteExecute(c,x,z) else ExecuteConsoleCommand(c) end end) if not o then Networking_SystemMessage(\"MWRUN: \"..tostring(e)) end end Networking_SystemMessage(\"MWRUN ran \"..n) end) --RUN",
+  "label": "8.1 (Local) Saves all commands tagged with --M into a persistent string so we no longer need it saved in console history",
+  "spoiler": false
+  },
+  {
+  "text": "local h=ConsoleScreenSettings:GetConsoleHistory() for i=#h,1,-1 do if not h[i].str:find(\"--RUN\",1,true) then table.remove(h,i) end end ConsoleScreenSettings.dirty=true ConsoleScreenSettings:Save() --RUN",
+  "label": "8.2 (Local) Runs all commands saved in the persistent string (#5 is no longer needed)",
+  "spoiler": false
+  },
+  {
+    "text": "local h=ConsoleScreenSettings:GetConsoleHistory() for i=#h,1,-1 do if not (h[i].str:find(\"--M\",1,true) or h[i].str:find(\"--RUN\",1,true)) then table.remove(h,i) end end ConsoleScreenSettings.dirty=true ConsoleScreenSettings:Save() --RUN",
+    "label": "Misc (Local -toggle off Remote before running) Deletes commands without --M tags, run this before the commands get overwritten by your other commands",
+    "spoiler": false
   },
   {
     "text": "ConsoleScreenSettings:Reset()",
