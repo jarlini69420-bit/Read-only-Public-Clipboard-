@@ -81,7 +81,12 @@
   },
   {
   "text": "local H=ChatHistory H.OrigAdd=H.OrigAdd or H.AddToHistory H.AddToHistory=function(s,t,u,n,nm,msg,...) local r=H.OrigAdd(s,t,u,n,nm,msg,...) if t~=ChatTypes.SystemMessage and type(msg)==\"string\" and msg:lower():find(MW_TRIG,1,true) then local ok,e=pcall(MW_Day) if not ok then Networking_SystemMessage(\"MW day: \"..tostring(e)) end end return r end --M",
-  "label": "10.2 (Local) Season and Moon cycle info (2/2)",
+  "label": "10.2 (Local) Season and Moon cycle info | send !day in chat for status (2/2)",
+  "spoiler": false
+  },
+  {
+  "text": "MW_LOCK=false MW_NM=(TheWorld.state.cycles+1)%20 MW_FM=(MW_NM+10)%20",
+  "label": "10.2.1 (Local) Season and Moon cycle info | Only run this command on the day that Celestial Champion is defeated to update the script",
   "spoiler": false
   },
   {
