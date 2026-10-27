@@ -75,6 +75,16 @@
   "spoiler": false
   },
   {
+  "text": "MW_FM,MW_NM,MW_TRIG,MW_LOCK=11,1,\"!day\",false function MW_Day() local w=TheWorld.state local d=w.cycles+1 local e=w.elapseddaysinseason local y=e+w.remainingdaysinseason local p=w.moonphase local nx={autumn=\"Winter\",winter=\"Spring\",spring=\"Summer\",summer=\"Autumn\"} if w.isnight and not MW_LOCK then if p==\"full\" then MW_FM=d%20 MW_NM=(d+10)%20 elseif p==\"new\" then MW_NM=d%20 MW_FM=(d+10)%20 end end local f=(MW_FM-d)%20 local n=(MW_NM-d)%20 local s=Networking_SystemMessage s(w.season:sub(1,1):upper()..w.season:sub(2)..\" Day \"..(e+1)..\" of \"..y..\" | Moon: \"..tostring(p)) s((y-e-1)..\" days left till \"..nx[w.season]) if MW_LOCK then s(\"Moon locked full until the Celestial Champion falls\") else s(\"Full moon \"..(f==0 and \"TODAY\" or \"in \"..f..\" days\")..\" | Day \"..(d+f)) s(\"New moon \"..(n==0 and \"TODAY\" or \"in \"..n..\" days\")..\" | Day \"..(d+n)) end end --M",
+  "label": "10.1 (Local) Season and Moon cycle info (1/2)",
+  "spoiler": false
+  },
+  {
+  "text": "local H=ChatHistory H.OrigAdd=H.OrigAdd or H.AddToHistory H.AddToHistory=function(s,t,u,n,nm,msg,...) local r=H.OrigAdd(s,t,u,n,nm,msg,...) if t~=ChatTypes.SystemMessage and type(msg)==\"string\" and msg:lower():find(MW_TRIG,1,true) then local ok,e=pcall(MW_Day) if not ok then Networking_SystemMessage(\"MW day: \"..tostring(e)) end end return r end --M",
+  "label": "10.2 (Local) Season and Moon cycle info (2/2)",
+  "spoiler": false
+  },
+  {
     "text": "local h=ConsoleScreenSettings:GetConsoleHistory() for i=#h,1,-1 do if not (h[i].str:find(\"--M\",1,true) or h[i].str:find(\"--RUN\",1,true)) then table.remove(h,i) end end ConsoleScreenSettings.dirty=true ConsoleScreenSettings:Save() --RUN",
     "label": "Misc (Local -toggle off Remote before running) Deletes commands without --M tags, run this before the commands get overwritten by your other commands",
     "spoiler": false
