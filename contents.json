@@ -65,6 +65,16 @@
   "spoiler": false
   },
   {
+  "text": "local p=ThePlayer if p._mhp then p._mhp:Cancel() p._mhp=nil end local last=-1 p._mhp=p:DoPeriodicTask(0.4,function() local m=p.components.rider and p.components.rider:GetMount() if not(m and m.components.health)then return end local h=m.components.health local cur=math.floor(h.currenthealth+.5) local max=math.floor(h.maxhealth+.5) if cur~=last then last=cur c_announce(string.format(\"MHP:%d:%d\",cur,max)) end end) c_announce(\"mb remote ok\") --M",
+  "label": "9.1 (Remote) Beefalo HP Badge (1/2)",
+  "spoiler": false
+  },
+  {
+  "text": "local c=ThePlayer.HUD.controls if ThePlayer._mb then ThePlayer._mb:Kill() end local B=require(\"widgets/badge\") local mb=B(nil,ThePlayer,{.08,.68,.08,1},\"status_health\",nil,nil,true) mb:SetPosition(0,-105,0) c.status:AddChild(mb) ThePlayer._mb=mb mb:Hide() local function set(cur,max) local p=(max>0)and(cur/max)or 1 mb:Show() mb:SetPercent(p,max) if mb.num then mb.num:SetString(tostring(math.floor(cur+.5))) end end local H=ChatHistory H.OrigAdd=H.OrigAdd or H.AddToHistory H.AddToHistory=function(s,t,u,n,nm,msg,...) if type(msg)==\"string\" then local a,b=msg:match(\"MHP:(%d+):(%d+)\") if a then set(tonumber(a),tonumber(b)) return end end return H.OrigAdd(s,t,u,n,nm,msg,...) end mb.OnUpdate=function() local r=ThePlayer.replica.rider if not(r and r:IsRiding())then mb:Hide() end end mb:StartUpdating() Networking_SystemMessage(\"mb quiet\")",
+  "label": "9.2 (Local) Beefalo HP Badge (2/2)",
+  "spoiler": false
+  },
+  {
     "text": "local h=ConsoleScreenSettings:GetConsoleHistory() for i=#h,1,-1 do if not (h[i].str:find(\"--M\",1,true) or h[i].str:find(\"--RUN\",1,true)) then table.remove(h,i) end end ConsoleScreenSettings.dirty=true ConsoleScreenSettings:Save() --RUN",
     "label": "Misc (Local -toggle off Remote before running) Deletes commands without --M tags, run this before the commands get overwritten by your other commands",
     "spoiler": false
