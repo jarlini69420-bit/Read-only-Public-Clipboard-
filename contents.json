@@ -65,13 +65,28 @@
   "spoiler": false
   },
   {
-  "text": "local p=ThePlayer if p._mhp then p._mhp:Cancel() p._mhp=nil end local last=-1 p._mhp=p:DoPeriodicTask(0.4,function() local m=p.components.rider and p.components.rider:GetMount() if not(m and m.components.health)then return end local h=m.components.health local cur=math.floor(h.currenthealth+.5) local max=math.floor(h.maxhealth+.5) if cur~=last then last=cur c_announce(string.format(\"MHP:%d:%d\",cur,max)) end end) c_announce(\"mb remote ok\") --M",
-  "label": "9.1 (Remote) Beefalo HP Badge (1/2)",
+  "text": "local p=ThePlayer if p._mhp then p._mhp:Cancel() p._mhp=nil end local last=-1 p._mhp=p:DoPeriodicTask(0.4,function() local m=p.components.rider and p.components.rider:GetMount() if not(m and m.components.health) then last=-1 return end local h=m.components.health local cur=math.floor(h.currenthealth+.5) local max=math.floor(h.maxhealth+.5) if cur~=last then last=cur c_announce(string.format(\"MHP:%d:%d\",cur,max)) end end) c_announce(\"mb remote ok\") --M",
+  "label": "9.1 (Remote) Beefalo Badge (1/4)",
   "spoiler": false
   },
   {
-  "text": "local c=ThePlayer.HUD.controls if ThePlayer._mb then ThePlayer._mb:Kill() end local B=require(\"widgets/badge\") local mb=B(nil,ThePlayer,{.08,.68,.08,1},\"status_health\",nil,nil,true) mb:SetPosition(0,-105,0) c.status:AddChild(mb) ThePlayer._mb=mb mb:Hide() local function set(cur,max) local p=(max>0)and(cur/max)or 1 mb:Show() mb:SetPercent(p,max) if mb.num then mb.num:SetString(tostring(math.floor(cur+.5))) end end local H=ChatHistory H.OrigAdd=H.OrigAdd or H.AddToHistory H.AddToHistory=function(s,t,u,n,nm,msg,...) if type(msg)==\"string\" then local a,b=msg:match(\"MHP:(%d+):(%d+)\") if a then set(tonumber(a),tonumber(b)) return end end return H.OrigAdd(s,t,u,n,nm,msg,...) end mb.OnUpdate=function() local r=ThePlayer.replica.rider if not(r and r:IsRiding())then mb:Hide() end end mb:StartUpdating() Networking_SystemMessage(\"mb quiet\") --M",
-  "label": "9.2 (Local) Beefalo HP Badge (2/2)",
+  "text": "function MW_Fade(b) local function f(w) if w==b.anim then w:GetAnimState():SetMultColour(.08,.68,.08,.5) elseif w.GetAnimState then w:GetAnimState():SetMultColour(1,1,1,.5) elseif w.SetTint then w:SetTint(1,1,1,.5) elseif w.SetColour then w:SetColour(1,1,1,.5) end for k in pairs(w.children or {}) do f(k) end end f(b) end --M",
+  "label": "9.2 (Local) Beefalo Badge Optional Opacity, Skippable (2/5)",
+  "spoiler": false
+  },
+  {
+  "text": "local H=ChatHistory H.OrigAdd=H.OrigAdd or H.AddToHistory H.MWH=H.MWH or {} H.AddToHistory=function(s,t,u,n,nm,msg,...) if type(msg)==\"string\" then for _,f in pairs(H.MWH) do local ok,r=pcall(f,t,msg) if ok and r then return end end end return H.OrigAdd(s,t,u,n,nm,msg,...) end --M",
+  "label": "9.3 (Local) Beefalo Badge (3/5)",
+  "spoiler": false
+  },
+  {
+  "text": "local P=ThePlayer local c=P.HUD.controls if P._mb then P._mb:Kill() end local st=c.status local hr=st.heart local mb=require(\"widgets/badge\")(nil,P,{.08,.68,.08,1},\"status_health\",nil,nil,true) st:AddChild(mb) P._mb=mb local p=hr:GetPosition() mb:SetPosition(p.x,p.y) local hw=hr:GetWorldPosition() local y0=mb:GetWorldPosition().y mb:SetPosition(p.x,p.y+100) local s=(mb:GetWorldPosition().y-y0)/100 local W,H=TheSim:GetScreenSize() mb:SetPosition(p.x+(W-0.2852*H-hw.x)/s,p.y+(H-0.2093*H-hw.y)/s) mb:Hide() local F=rawget(_G,\"MW_Fade\") if F then F(mb) end --M",
+  "label": "9.4 (Local) Beefalo Badge (4/5)",
+  "spoiler": false
+  },
+  {
+  "text": "local P=ThePlayer local mb=P._mb ChatHistory.MWH=ChatHistory.MWH or {} ChatHistory.MWH.mhp=function(t,msg) local a,b=msg:match(\"MHP:(%d+):(%d+)\") if not a then return end a,b=tonumber(a),tonumber(b) mb:Show() mb:SetPercent(b>0 and a/b or 1,b) if mb.num then mb.num:SetString(tostring(a)) mb.num:Show() end return true end mb.OnUpdate=function() local r=P.replica.rider if not(r and r:IsRiding()) then mb:Hide() end end mb:StartUpdating() --M",
+  "label": "9.5 (Local) Beefalo Badge (5/5)",
   "spoiler": false
   },
   {
