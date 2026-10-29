@@ -65,7 +65,7 @@
   "spoiler": false
   },
   {
-  "text": "local h=ConsoleScreenSettings:GetConsoleHistory() for i=#h,1,-1 do local s=h[i].str if s:find(\"mw_aq\",1,true) or s:find(\"MWS=\",1,true) then table.remove(h,i) end end ConsoleScreenSettings.dirty=true ConsoleScreenSettings:Save() --RUN",
+  "text": "TheSim:GetPersistentString(\"mw_macro\",function(ok,old) local L,K={},{} local function add(l) local k=l:sub(2,45) if K[k] then L[K[k]]=l else L[#L+1]=l K[k]=#L end end if ok then for l in old:gmatch(\"[^\\n]+\") do add(l) end end for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory()) do local s=v.str if s:find(\"--M\",1,true) and not s:find(\"--RUN\",1,true) and not s:find(\"mw_macro\",1,true) and not s:find(\"ConsoleScreenSettings\",1,true) then add((v.remote and \"R\" or \"L\")..s) end end TheSim:SetPersistentString(\"mw_macro\",table.concat(L,\"\\n\"),false) Networking_SystemMessage(\"MW macro saved: \"..#L..\" lines\") end) --RUN",
   "label": "8.3 (Local) Add new commands in the persistent string",
   "spoiler": false
   },
