@@ -21,6 +21,7 @@
   --green:         #4ade80;
   --red:           #f87171;
   --radius:        8px;
+  --code-bg:       #151515;
 }
 :root.light-mode {
   --bg:            #f5f5f7;
@@ -32,6 +33,7 @@
   --text-secondary:#515154;
   --text-muted:    #86868b;
   --text-accent:   #1d4ed8;
+  --code-bg:       #eaeaec;
 }
 
 body {
@@ -65,23 +67,21 @@ body {
   transition: color 0.15s, background 0.15s;
 }
 .icon-btn:hover { color: var(--text-primary); background: var(--surface-1); }
-.icon-btn.active { color: var(--text-accent); }
 
 .board {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 12px; padding: 1rem 1.25rem;
 }
 
 .clip-card {
   background: var(--surface-2); border: 0.5px solid var(--border);
-  border-radius: 12px; padding: 12px 14px; min-height: 120px;
+  border-radius: 12px; padding: 12px 14px;
   display: flex; flex-direction: column; gap: 8px;
   cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
   user-select: none; position: relative;
 }
 .clip-card:hover { border-color: var(--border-strong); }
-.clip-card.spoiler .clip-text { filter: blur(5px); user-select: none; }
 
 .clip-label {
   font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
@@ -93,17 +93,35 @@ body {
   background: var(--text-accent); flex-shrink: 0;
 }
 
+/* Single-line horizontal scrollable code box */
+.clip-text-container {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+}
+.clip-text-container::-webkit-scrollbar {
+  height: 4px;
+}
+.clip-text-container::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 2px;
+}
+
 .clip-text {
-  flex: 1; font-size: 13px; line-height: 1.55;
-  color: var(--text-primary); white-space: pre-wrap; word-break: break-word;
-  min-height: 48px; transition: filter 0.2s;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  display: inline-block;
 }
 .clip-text.empty { color: var(--text-muted); font-style: italic; }
 
 .actions {
-  display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 22px;
+  display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-height: 22px;
 }
-.actions-left, .actions-right { display: flex; align-items: center; gap: 4px; }
 
 .toast {
   position: fixed; bottom: 24px; left: 50%;
@@ -142,14 +160,7 @@ body {
 
 <script>
 // ── Config ───────────────────────────────────────────────────
-// Replace with your GitHub raw URL, e.g.:
-// https://raw.githubusercontent.com/USERNAME/REPO/main/clipdata.json
 const GITHUB_JSON_URL = './contents.json';
-
-// Expected JSON shapes (array):
-//   [ "plain text", ... ]
-//   or [ { "text": "...", "label": "My Label", "spoiler": true }, ... ]
-// label is optional — falls back to Clip A / B / C ...
 
 const LABELS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const isDesktop = window.matchMedia('(pointer: fine)').matches;
@@ -158,7 +169,6 @@ document.getElementById('action-hint').textContent =
 
 // ── State ─────────────────────────────────────────────────────
 let clips = [];
-const revealedSet = new Set();
 
 // ── Sync dot ──────────────────────────────────────────────────
 const syncDot = document.getElementById('sync-dot');
@@ -190,7 +200,6 @@ async function loadClips() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     clips = normalizeClips(data);
-    revealedSet.clear();
     setSyncStatus('ok');
     render();
   } catch (err) {
@@ -262,48 +271,33 @@ function render() {
   if (clips.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = 'No clips loaded. Check the GitHub URL or hit refresh.';
+    empty.textContent = 'No clips loaded. Check the JSON file or hit refresh.';
     board.appendChild(empty);
     return;
   }
 
-  clips.forEach((clip, i) => {
-    const isSpoilered = clip.spoiler && !revealedSet.has(i);
-
+  clips.forEach((clip) => {
     const card = document.createElement('div');
-    card.className = 'clip-card' + (isSpoilered ? ' spoiler' : '');
+    card.className = 'clip-card';
 
-    // Label that points to this clip
+    // Label
     const labelEl = document.createElement('div');
     labelEl.className = 'clip-label';
     labelEl.textContent = clip.label;
 
+    // One-line scrollable container
+    const textContainer = document.createElement('div');
+    textContainer.className = 'clip-text-container';
+
     // Text content
     const textEl = document.createElement('div');
     textEl.className = 'clip-text' + (clip.text ? '' : ' empty');
-    textEl.textContent = clip.text || '(empty)';
+    textEl.textContent = clip.text ? clip.text.replace(/\r?\n|\r/g, ' ') : '(empty)';
+    textContainer.appendChild(textEl);
 
     // Actions
     const actions = document.createElement('div');
     actions.className = 'actions';
-    const actLeft = document.createElement('div');
-    actLeft.className = 'actions-left';
-    const actRight = document.createElement('div');
-    actRight.className = 'actions-right';
-
-    if (clip.spoiler) {
-      const spoilerBtn = document.createElement('button');
-      spoilerBtn.className = 'icon-btn' + (revealedSet.has(i) ? ' active' : '');
-      spoilerBtn.title = revealedSet.has(i) ? 'Hide again' : 'Reveal';
-      spoilerBtn.innerHTML = `<i class="ti ${revealedSet.has(i) ? 'ti-eye' : 'ti-eye-off'}"></i>`;
-      spoilerBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        if (revealedSet.has(i)) revealedSet.delete(i);
-        else revealedSet.add(i);
-        render();
-      });
-      actLeft.appendChild(spoilerBtn);
-    }
 
     if (clip.text) {
       const copyBtn = document.createElement('button');
@@ -314,13 +308,12 @@ function render() {
         e.stopPropagation();
         executeCopy(clip.text);
       });
-      actRight.appendChild(copyBtn);
+      actions.appendChild(copyBtn);
     }
 
-    actions.append(actLeft, actRight);
-    card.append(labelEl, textEl, actions);
+    card.append(labelEl, textContainer, actions);
 
-    // Whole card copies on click/tap
+    // Whole card copies full string on click/tap
     card.addEventListener('click', () => {
       if (clip.text) executeCopy(clip.text);
     });
