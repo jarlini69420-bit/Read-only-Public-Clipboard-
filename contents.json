@@ -55,7 +55,7 @@
   "spoiler": false
   },
   {
-  "text": "TheSim:GetPersistentString(\"mw_macro\",function(ok,old) local L,K={},{} local function add(l) local k=l:sub(2,45) if K[k] then L[K[k]]=l else L[#L+1]=l K[k]=#L end end if ok then for l in old:gmatch(\"[^\\n]+\") do add(l) end end for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory()) do if v.str:find(\"--M\",1,true) and not v.str:find(\"--RUN\",1,true) then add((v.remote and \"R\" or \"L\")..v.str) end end TheSim:SetPersistentString(\"mw_macro\",table.concat(L,\"\\n\"),false) Networking_SystemMessage(\"MW macro saved: \"..#L..\" lines\") end) --RU",
+  "text": "TheSim:GetPersistentString(\"mw_macro\",function(ok,old) local L,K={},{} local function add(l) local k=l:sub(2,45) if K[k] then L[K[k]]=l else L[#L+1]=l K[k]=#L end end if ok then for l in old:gmatch(\"[^\\n]+\") do add(l) end end for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory()) do if v.str:find(\"--M\",1,true) and not v.str:find(\"--RUN\",1,true) then add((v.remote and \"R\" or \"L\")..v.str) end end TheSim:SetPersistentString(\"mw_macro\",table.concat(L,\"\\n\"),false) Networking_SystemMessage(\"MW macro saved: \"..#L..\" lines\") end) --RUN",
   "label": "8.1 (Local) Saves all commands tagged with --M into a persistent string so we no longer need it saved in console history",
   "spoiler": false
   },
