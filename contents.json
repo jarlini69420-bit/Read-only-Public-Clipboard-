@@ -65,6 +65,11 @@
   "spoiler": false
   },
   {
+  "text": "local h=ConsoleScreenSettings:GetConsoleHistory() for i=#h,1,-1 do local s=h[i].str if s:find(\"mw_aq\",1,true) or s:find(\"MWS=\",1,true) then table.remove(h,i) end end ConsoleScreenSettings.dirty=true ConsoleScreenSettings:Save() --RUN",
+  "label": "8.3 (Local) Add new commands to the initial save",
+  "spoiler": false
+  },
+  {
   "text": "local p=ThePlayer if p._mhp then p._mhp:Cancel() p._mhp=nil end local last=-1 p._mhp=p:DoPeriodicTask(0.4,function() local m=p.components.rider and p.components.rider:GetMount() if not(m and m.components.health) then last=-1 return end local h=m.components.health local cur=math.floor(h.currenthealth+.5) local max=math.floor(h.maxhealth+.5) if cur~=last then last=cur c_announce(string.format(\"MHP:%d:%d\",cur,max)) end end) c_announce(\"mb remote ok\") --M",
   "label": "9.1 (Remote) Beefalo Badge (1/4)",
   "spoiler": false
