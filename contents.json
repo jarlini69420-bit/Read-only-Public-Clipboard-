@@ -55,12 +55,12 @@
   "spoiler": false
   },
   {
-  "text": "TheSim:GetPersistentString(\"mw_macro\",function(ok,s) if not ok then Networking_SystemMessage(\"no saved macro\") return end local n=0 for l in s:gmatch(\"[^\\n]+\") do local c=l:sub(2) n=n+1 local o,e=pcall(function() if l:sub(1,1)==\"R\" then local x,_,z=TheSim:ProjectScreenPos(TheSim:GetPosition()) TheNet:SendRemoteExecute(c,x,z) else ExecuteConsoleCommand(c) end end) if not o then Networking_SystemMessage(\"MWRUN: \"..tostring(e)) end end Networking_SystemMessage(\"MWRUN ran \"..n) end) --RUN",
+  "text": "TheSim:GetPersistentString(\"mw_macro\",function(ok,old) local L,K={},{} local function add(l) local k=l:sub(2,45) if K[k] then L[K[k]]=l else L[#L+1]=l K[k]=#L end end if ok then for l in old:gmatch(\"[^\\n]+\") do add(l) end end for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory()) do if v.str:find(\"--M\",1,true) and not v.str:find(\"--RUN\",1,true) then add((v.remote and \"R\" or \"L\")..v.str) end end TheSim:SetPersistentString(\"mw_macro\",table.concat(L,\"\\n\"),false) Networking_SystemMessage(\"MW macro saved: \"..#L..\" lines\") end) --RU",
   "label": "8.1 (Local) Saves all commands tagged with --M into a persistent string so we no longer need it saved in console history",
   "spoiler": false
   },
   {
-  "text": "TheSim:GetPersistentString(\"mw_macro\",function(ok,s) if not ok or not s or s==\"\" then Networking_SystemMessage(\"no mw_macro\") return end local n,e=0,0 for l in s:gmatch(\"[^\\n]+\") do if #l>1 then n=n+1 local mode,c=l:sub(1,1),l:sub(2) local ok2,err=pcall(function() if mode==\"R\" or mode==\"r\" then local x,_,z=TheSim:ProjectScreenPos(TheSim:GetPosition()) TheNet:SendRemoteExecute(c,x,z) else ExecuteConsoleCommand(c) end end) if not ok2 then e=e+1 Networking_SystemMessage(\"fail: \"..tostring(err)) end end end Networking_SystemMessage(\"MWRUN \"..n..\" err \"..e) end)",
+  "text": "TheSim:GetPersistentString(\"mw_macro\",function(ok,s) if not ok then Networking_SystemMessage(\"no saved macro\") return end local n=0 for l in s:gmatch(\"[^\\n]+\") do local c=l:sub(2) n=n+1 local o,e=pcall(function() if l:sub(1,1)==\"R\" then local x,_,z=TheSim:ProjectScreenPos(TheSim:GetPosition()) TheNet:SendRemoteExecute(c,x,z) else ExecuteConsoleCommand(c) end end) if not o then Networking_SystemMessage(\"MWRUN: \"..tostring(e)) end end Networking_SystemMessage(\"MWRUN ran \"..n) end) --RUN",
   "label": "8.2 (Local) Runs all commands saved in the persistent string (#5 is no longer needed)",
   "spoiler": false
   },
