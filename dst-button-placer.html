@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DST button placer</title>
+<style>
+:root{
+  --bg:#e4e9ea; --panel:#f5f7f7; --ink:#18242e; --ink2:#51616d; --line:#c3ccd0;
+  --stage:#101a22; --brass:#b5842a; --brass-ink:#fff; --teal:#23766d; --rose:#a8423a;
+  --code-bg:#e9eeef; --focus:#0b6bcb;
+  --ui:"Avenir Next","Segoe UI","Helvetica Neue",system-ui,sans-serif;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0e171e; --panel:#16232d; --ink:#e6ecef; --ink2:#9fb0bb; --line:#2b3d4a;
+    --stage:#070d12; --brass:#d9a53f; --brass-ink:#1b1405; --teal:#46b3a6; --rose:#e0766b;
+    --code-bg:#0f1b24; --focus:#6bb4ff;
+  }
+}
+*{box-sizing:border-box}
+html{color-scheme:light dark;width:100%;max-width:100%;overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--ui);-webkit-text-size-adjust:100%;width:100%;max-width:100%;overflow-x:hidden}
+h1,h2{font-family:var(--serif);font-weight:600;margin:0;letter-spacing:.005em}
+h1{font-size:1.9rem;line-height:1.15}
+h2{font-size:1.15rem}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.wrap{width:100%;max-width:min(1500px,100%);margin:0 auto;padding:20px 18px 56px}
+.top{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:flex-end;justify-content:space-between;padding-bottom:16px;border-bottom:2px solid var(--ink)}
+.titlerow{display:flex;align-items:center;gap:10px;position:relative}
+.tipbtn{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--ink);background:transparent;font:700 .95rem var(--serif);font-style:italic;cursor:pointer;display:grid;place-items:center;padding:0}
+.tipbtn:hover,.tipbtn[aria-expanded=true]{background:var(--brass);border-color:var(--brass);color:var(--brass-ink)}
+.tip{position:absolute;left:0;top:calc(100% + 10px);z-index:30;width:min(400px,calc(100vw - 28px));background:var(--panel);border:1.5px solid var(--ink);border-radius:3px;padding:12px 16px 12px 14px;font-size:.92rem;box-shadow:0 10px 28px rgba(0,0,0,.28)}
+.tip[hidden]{display:none}
+.tip b{font-family:var(--serif);font-size:1.02rem}
+.tip ol{margin:6px 0 0;padding-left:20px;display:grid;gap:5px;color:var(--ink2)}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border:1.5px solid var(--ink);background:transparent;border-radius:3px;cursor:pointer;font-weight:600;-webkit-tap-highlight-color:transparent}
+.btn:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.btn.primary{background:var(--brass);border-color:var(--brass);color:var(--brass-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.small{min-height:34px;padding:0 12px;font-size:.9rem}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,340px);gap:22px;margin-top:20px;align-items:start;width:100%}
+.stagebar{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;margin-bottom:8px;color:var(--ink2);font-size:.92rem}
+.stagebar label{display:flex;align-items:center;gap:8px}
+.selpill{flex:1 1 230px;text-align:center;font-weight:700;color:var(--ink);padding:5px 12px;border:1.5px solid var(--brass);border-radius:999px;background:color-mix(in srgb,var(--brass) 14%,transparent);font-variant-numeric:tabular-nums;min-width:0;white-space:nowrap}
+.stagebar input[type=range]{width:150px;max-width:40vw}
+.scroll{overflow:auto;border:1.5px solid var(--ink);background:var(--stage);max-height:78vh;border-radius:2px;-webkit-overflow-scrolling:touch;width:100%;max-width:100%}
+.stage{position:relative;width:100%;line-height:0;user-select:none;-webkit-user-select:none}
+.stage img{display:block;width:100%;height:auto;pointer-events:none}
+.stage svg{position:absolute;inset:0;width:100%;height:100%;touch-action:pan-x pan-y pinch-zoom}
+.stage.drop::after{content:"Drop the screenshot here";position:absolute;inset:0;display:grid;place-items:center;background:rgba(10,20,28,.72);color:#fff;font:600 1.15rem var(--ui);line-height:1.2;padding:1rem;text-align:center}
+.ghost{cursor:grab;touch-action:none}
+.ghost:active{cursor:grabbing}
+.stage-controls{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:16px;padding:16px;background:var(--panel);border:1.5px solid var(--ink);border-radius:3px;width:100%;max-width:100%}
+.panel{background:var(--panel);border:1.5px solid var(--ink);padding:16px;border-radius:2px;position:sticky;top:12px;width:100%;max-width:100%;min-width:0}
+.panel h2{margin-bottom:10px}
+.groups{display:grid;gap:12px;margin:0 0 16px;padding:0;list-style:none}
+.grp{border-top:1px solid var(--line);padding-top:10px}
+.grp:first-child{border-top:0;padding-top:0}
+.grp header{display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:6px}
+.grp header input{width:18px;height:18px;accent-color:var(--brass)}
+.items{display:grid;gap:6px}
+.item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 10px;border:1.5px solid var(--line);background:transparent;border-radius:3px;cursor:pointer;min-height:42px}
+.item[aria-pressed=true]{border-color:var(--brass);background:color-mix(in srgb,var(--brass) 14%,transparent)}
+.item .chip{width:20px;height:20px;border-radius:3px;border:2px solid;flex:none;display:grid;place-items:center;font:700 .7rem/1 var(--ui)}
+.item .name{flex:1;min-width:0}
+.item .pos{color:var(--ink2);font-variant-numeric:tabular-nums;font-size:.85rem}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;width:100%;max-width:340px}
+.fields label{display:grid;gap:4px;font-size:.88rem;color:var(--ink2);min-width:0}
+.fields input,.fields select{height:42px;padding:0 10px;border:1.5px solid var(--line);background:var(--bg);border-radius:3px;color:var(--ink);font-variant-numeric:tabular-nums;width:100%;max-width:100%;min-width:0}
+.pad{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:6px;justify-content:center}
+.pad button{border:1.5px solid var(--ink);background:transparent;border-radius:3px;font-size:1.15rem;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.pad button:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.pad .c{grid-column:2;grid-row:2;border-style:dashed;color:var(--ink2);font-size:.7rem}
+.opts{display:grid;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.opts label{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.opts input[type=number]{width:90px;height:38px;padding:0 8px;border:1.5px solid var(--line);background:var(--bg);border-radius:3px}
+.opts .chk{justify-content:flex-start}
+.hint{color:var(--ink2);font-size:.88rem;text-align:center}
+.info-note{font-size:.85rem;color:var(--ink2);display:flex;align-items:center;gap:6px}
+.info-note .icon{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--line);color:var(--ink);font-size:.75rem;font-weight:bold}
+.out{margin-top:34px;width:100%;max-width:100%}
+.out>h2{font-size:1.4rem;margin-bottom:4px}
+.out>p{color:var(--ink2);margin-bottom:16px;max-width:70ch}
+.script{border-top:2px solid var(--ink);padding:14px 0 22px}
+.script header{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.script header .meta{color:var(--ink2);font-size:.9rem}
+.script header .meta b{color:var(--ink)}
+.script .warn{color:var(--rose);font-weight:600}
+.script .ok{color:var(--teal);font-weight:600}
+.script pre,.script textarea.code{margin:0;padding:12px;background:var(--code-bg);border:1px solid var(--line);border-radius:2px;overflow:auto;max-height:220px;font:12.5px/1.45 var(--mono);white-space:pre-wrap;word-break:break-all;width:100%;color:var(--ink);resize:vertical;min-height:90px}
+.script textarea.code{max-height:none;min-height:110px}
+.script .row{display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.empty{color:var(--ink2);padding:18px 0;border-top:2px solid var(--ink)}
+@media (prefers-reduced-motion:no-preference){.btn,.item{transition:background .12s,border-color .12s}}
+@media (max-width:980px){
+  .wrap{padding:12px 10px 40px}
+  .grid{grid-template-columns:1fr;gap:14px}
+  .panel{position:static}
+  h1{font-size:1.4rem}
+  .scroll{max-height:50vh}
+  .stage-controls{padding:12px}
+  .pad{grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px)}
+  .fields input,.fields select{height:44px;font-size:16px}
+  .btn{min-height:44px}
+  .actions{width:100%}
+  .actions .btn,.actions label.btn{flex:1 1 auto;min-width:0}
+  .script textarea.code{font-size:13px;min-height:120px}
+}
+@media (max-width:520px){
+  .fields{grid-template-columns:1fr;max-width:100%}
+  .stagebar{font-size:.85rem}
+  .stagebar input[type=range]{width:100px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="titlerow">
+      <h1>DST button placer</h1>
+      <button class="tipbtn" id="tipbtn" type="button" aria-label="How to use this page" aria-expanded="false" aria-controls="tip">i</button>
+      <div class="tip" id="tip" role="tooltip" hidden>
+        <b>How to use</b>
+        <ol>
+          <li>Upload an uncropped screenshot with your HUD showing (or use the blank screen).</li>
+          <li>Pick a button, then drag it, use the arrow keys (Shift for 10 px), the arrow pad, or type exact numbers.</li>
+          <li>Use Zoom for fine adjustments; scroll the preview when zoomed in.</li>
+          <li>Copy each script and paste it in the console with the toggle on Local.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="actions">
+      <label class="btn primary" for="file">Upload screenshot</label>
+      <input type="file" id="file" accept="image/*" hidden>
+      <button class="btn" id="blank" type="button">Use a blank 2400×1080 screen</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <section aria-label="Screenshot">
+      <div class="stagebar">
+        <span id="size">No screenshot yet (blank 2400×1080)</span>
+        <span class="selpill" id="selname" aria-live="polite">Selected</span>
+        <label>Zoom <input type="range" id="zoom" min="100" max="300" step="10" value="100" aria-label="Zoom"><span id="zoomv">100%</span></label>
+      </div>
+      <div class="scroll" id="scroll">
+        <div class="stage" id="stage">
+          <img id="shot" alt="Your game screenshot">
+          <svg id="ov" aria-hidden="true"></svg>
+        </div>
+      </div>
+
+      <!-- Controls placed directly below the screen preview area -->
+      <div class="stage-controls">
+        <!-- a) Arrow Pad -->
+        <div class="pad" role="group" aria-label="Nudge selected button">
+          <button type="button" data-d="0,-1" style="grid-column:2;grid-row:1" aria-label="Up">▲</button>
+          <button type="button" data-d="-1,0" style="grid-column:1;grid-row:2" aria-label="Left">◀</button>
+          <button type="button" class="c" id="resetitem" aria-label="Reset this button">reset</button>
+          <button type="button" data-d="1,0" style="grid-column:3;grid-row:2" aria-label="Right">▶</button>
+          <button type="button" data-d="0,1" style="grid-column:2;grid-row:3" aria-label="Down">▼</button>
+        </div>
+        
+
+        <!-- c) Exact coordinate number fields -->
+        <div class="fields" style="width:100%;max-width:340px;">
+          <label>X (px from left)<input type="number" id="fx" step="1" inputmode="numeric"></label>
+          <label>Y (px from top)<input type="number" id="fy" step="1" inputmode="numeric"></label>
+        </div>
+
+        <!-- d) Scale & Step controls -->
+        <div class="fields" style="width:100%;max-width:340px;">
+          <label>Step<select id="step"><option value="1">1 px</option><option value="5">5 px</option><option value="10">10 px</option><option value="25">25 px</option></select></label>
+          <label>Button size<input type="number" id="scale" step="0.05" min="0.5" max="3"></label>
+        </div>
+
+        <!-- e) --M tag checkbox & f) Info note -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:4px;">
+          <label class="chk" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;">
+            <input type="checkbox" id="tag"> Add the --M tag to each script
+          </label>
+          <p class="info-note">
+            <span class="icon">i</span>
+            <span>Only check when you're satisfied with the placement</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel" aria-label="Controls">
+      <h2>Buttons</h2>
+      <ul class="groups" id="groups"></ul>
+      <div class="opts">
+        <button class="btn small" id="resetall" type="button">Reset all positions</button>
+      </div>
+    </aside>
+  </div>
+
+  <section class="out" aria-label="Scripts">
+    <h2>Scripts</h2>
+    <p>Paste these in the console with the toggle on Local. They place each button from the screen edges, so they keep the right spot on other screen sizes.</p>
+    <div id="scripts"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+var KEY="dst_button_placer_v1";
+var GROUPS=[
+  {id:"rot",title:"Rotate buttons",items:["rotL","rotR"],mode:"Local",note:"Rebuilds the camera rotate buttons. Replaces the older rotate line when saved."},
+  {id:"swap",title:"Quick-swap button",items:["swap"],mode:"Local",note:"Equips your rightmost equippable. Paste it after the rotate buttons."},
+  {id:"box",title:"BOX and POT buttons",items:["box","pot"],mode:"Local",note:"Needs the MW_Move, MW_Open and MW_Tint lines pasted first."},
+  {id:"badge",title:"Beefalo health badge",items:["badge"],mode:"Local",note:"Two lines: paste the first, then the second. Needs MW_Fade pasted first, and the Remote sender running."}
+];
+var DEFAULTS={
+  rotL:{label:"Rotate left",glyph:"<",x:2128/2400,y:976/1080,kind:"btn",color:"#b5842a"},
+  rotR:{label:"Rotate right",glyph:">",x:2293/2400,y:976/1080,kind:"btn",color:"#b5842a"},
+  swap:{label:"Quick swap",glyph:"S",x:2040/2400,y:790/1080,kind:"btn",color:"#2e86c1"},
+  box:{label:"BOX",glyph:"BOX",x:290/2400,y:975/1080,kind:"btn",color:"#c0603a"},
+  pot:{label:"POT",glyph:"POT",x:171/2400,y:975/1080,kind:"btn",color:"#8e5ac0"},
+  badge:{label:"Beefalo badge",glyph:"HP",x:2092/2400,y:226/1080,kind:"badge",color:"#2fa36b"}
+};
+var st={W:2400,H:1080,pos:{},S:1.25,tag:false,inc:{rot:true,swap:true,box:true,badge:true},sel:"rotL"};
+function resetPos(id){st.pos[id]={x:DEFAULTS[id].x,y:DEFAULTS[id].y};}
+Object.keys(DEFAULTS).forEach(resetPos);
+
+/* ---------- storage (fractions of the screenshot, so positions survive a new screenshot) ---------- */
+function save(){try{localStorage.setItem(KEY,JSON.stringify({pos:st.pos,S:st.S,tag:st.tag,inc:st.inc,sel:st.sel}));}catch(e){}}
+function load(){try{var r=localStorage.getItem(KEY);if(!r)return;var d=JSON.parse(r);
+  if(d.pos)Object.keys(DEFAULTS).forEach(function(k){if(d.pos[k]&&isFinite(d.pos[k].x)&&isFinite(d.pos[k].y))st.pos[k]=d.pos[k];});
+  if(isFinite(d.S))st.S=d.S; if(typeof d.tag==="boolean")st.tag=d.tag; if(d.inc)Object.keys(st.inc).forEach(function(k){if(typeof d.inc[k]==="boolean")st.inc[k]=d.inc[k];});
+  if(d.sel&&DEFAULTS[d.sel])st.sel=d.sel;}catch(e){}}
+load();
+
+/* ---------- elements ---------- */
+var $=function(id){return document.getElementById(id);};
+var shot=$("shot"),ov=$("ov"),stage=$("stage"),scroll=$("scroll");
+var NS="http://www.w3.org/2000/svg";
+
+/* ---------- image handling ---------- */
+function blankImage(){
+  var s='<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1080" viewBox="0 0 2400 1080"><rect width="2400" height="1080" fill="#14222c"/>'
+   +'<g stroke="#223644" stroke-width="2">'+(function(){var o="";for(var i=1;i<24;i++)o+='<line x1="'+i*100+'" y1="0" x2="'+i*100+'" y2="1080"/>';for(var j=1;j<11;j++)o+='<line x1="0" y1="'+j*100+'" x2="2400" y2="'+j*100+'"/>';return o;})()+'</g>'
+   +'<text x="1200" y="520" fill="#5f7a8a" font-family="sans-serif" font-size="46" text-anchor="middle">Upload a screenshot to place buttons on your real HUD</text></svg>';
+  return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(s);
+}
+function setSize(w,h,named){st.W=w;st.H=h;$("size").textContent=(named||"Screenshot")+": "+w+" × "+h+" px";draw();render();}
+shot.addEventListener("load",function(){if(shot.naturalWidth)setSize(shot.naturalWidth,shot.naturalHeight,shot.dataset.name||"Screenshot");});
+function useFile(f){
+  if(!f||!/^image\//.test(f.type)){return;}
+  var r=new FileReader();r.onload=function(){shot.dataset.name=f.name.length>34?f.name.slice(0,31)+"...":f.name;shot.src=r.result;};r.readAsDataURL(f);
+}
+$("file").addEventListener("change",function(e){useFile(e.target.files[0]);e.target.value="";});
+$("blank").addEventListener("click",function(){shot.dataset.name="Blank screen";shot.src=blankImage();});
+["dragenter","dragover"].forEach(function(t){stage.addEventListener(t,function(e){e.preventDefault();stage.classList.add("drop");});});
+["dragleave","drop"].forEach(function(t){stage.addEventListener(t,function(e){e.preventDefault();stage.classList.remove("drop");});});
+stage.addEventListener("drop",function(e){var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];useFile(f);});
+
+/* ---------- zoom ---------- */
+$("zoom").addEventListener("input",function(e){
+  var z=+e.target.value,w0=stage.offsetWidth||1,h0=stage.offsetHeight||1;
+  var cx=(scroll.scrollLeft+scroll.clientWidth/2)/w0,cy=(scroll.scrollTop+scroll.clientHeight/2)/h0;
+  stage.style.width=z+"%";$("zoomv").textContent=z+"%";
+  scroll.scrollLeft=cx*stage.offsetWidth-scroll.clientWidth/2;scroll.scrollTop=cy*stage.offsetHeight-scroll.clientHeight/2;
+});
+
+/* ---------- geometry ---------- */
+function px(id){var p=st.pos[id];return {x:Math.round(p.x*st.W),y:Math.round(p.y*st.H)};}
+function setPx(id,x,y){x=Math.max(0,Math.min(st.W,x));y=Math.max(0,Math.min(st.H,y));st.pos[id]={x:x/st.W,y:y/st.H};}
+function btnW(){return 0.063*st.S*st.H;}
+
+/* ---------- overlay drawing ---------- */
+function el(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function draw(){
+  while(ov.firstChild)ov.removeChild(ov.firstChild);
+  var W=st.W,H=st.H;ov.setAttribute("viewBox","0 0 "+W+" "+H);ov.setAttribute("preserveAspectRatio","none");
+  var tick=H/120;
+  /* rulers: ticks every 0.05 of the screen height along the top and left edges */
+  var g=el("g",{stroke:"#ffffff","stroke-opacity":".55","stroke-width":tick*.45},ov);
+  for(var i=0;i*0.05*H<=W;i++){var x=i*0.05*H,big=i%2===0;el("line",{x1:x,y1:0,x2:x,y2:big?tick*5:tick*2.5},g);}
+  for(var j=0;j*0.05*H<=H;j++){var y=j*0.05*H,bigy=j%2===0;el("line",{x1:0,y1:y,x2:bigy?tick*5:tick*2.5,y2:y},g);}
+  var sel=px(st.sel),sp=el("g",{stroke:"#e7b24a","stroke-width":tick*.5,"stroke-dasharray":(tick*3)+" "+(tick*2),"stroke-opacity":".9"},ov);
+  el("line",{x1:0,y1:sel.y,x2:W,y2:sel.y},sp);el("line",{x1:sel.x,y1:0,x2:sel.x,y2:H},sp);
+  var bw=btnW();
+  Object.keys(DEFAULTS).forEach(function(id){
+    var d=DEFAULTS[id],p=px(id),on=st.inc[groupOf(id)],isSel=id===st.sel;
+    var gg=el("g",{"class":"ghost",transform:"translate("+p.x+","+p.y+")","data-id":id,opacity:on?1:.35},ov);
+    if(d.kind==="badge"){
+      var r=H*0.047;
+      el("circle",{r:r,fill:d.color,"fill-opacity":".45",stroke:isSel?"#e7b24a":d.color,"stroke-width":isSel?tick*1.1:tick*.7},gg);
+      el("text",{y:r*0.22,"text-anchor":"middle",fill:"#fff","font-size":r*0.7,"font-family":"sans-serif","font-weight":700},gg).textContent=d.glyph;
+      el("text",{y:r*1.95,"text-anchor":"middle",fill:"#fff","font-size":r*0.62,"font-family":"sans-serif"},gg).textContent="250";
+    }else{
+      el("rect",{x:-bw/2,y:-bw/2,width:bw,height:bw,rx:bw*0.06,fill:d.color,"fill-opacity":".5",stroke:isSel?"#e7b24a":d.color,"stroke-width":isSel?tick*1.1:tick*.7},gg);
+      el("text",{y:bw*0.12,"text-anchor":"middle",fill:"#fff","font-size":d.glyph.length>1?bw*0.3:bw*0.5,"font-family":"sans-serif","font-weight":700},gg).textContent=d.glyph;
+    }
+    gg.addEventListener("pointerdown",function(e){startDrag(e,id,gg);});
+  });
+  $("selname").textContent=DEFAULTS[st.sel].label+"  ·  "+sel.x+", "+sel.y;
+}
+function groupOf(id){for(var i=0;i<GROUPS.length;i++)if(GROUPS[i].items.indexOf(id)>-1)return GROUPS[i].id;}
+
+/* ---------- dragging (smooth mobile) ---------- */
+var drag=null,dragRaf=0,dragPending=null;
+function svgPoint(e){var pt=ov.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;var m=ov.getScreenCTM();return m?pt.matrixTransform(m.inverse()):{x:0,y:0};}
+function startDrag(e,id,node){
+  e.preventDefault();e.stopPropagation();select(id,true);
+  var p=svgPoint(e),c=px(id);drag={id:id,dx:c.x-p.x,dy:c.y-p.y,pid:e.pointerId};
+  scroll.style.overflow="hidden";
+  try{node.setPointerCapture(e.pointerId);}catch(x){}
+}
+function applyDrag(){dragRaf=0;if(!drag||!dragPending)return;setPx(drag.id,Math.round(dragPending.x+drag.dx),Math.round(dragPending.y+drag.dy));draw();syncFields();renderGroups();}
+ov.addEventListener("pointermove",function(e){
+  if(!drag||e.pointerId!==drag.pid)return;
+  e.preventDefault();dragPending=svgPoint(e);if(!dragRaf)dragRaf=requestAnimationFrame(applyDrag);
+},{passive:false});
+function endDrag(e){
+  if(!drag||(e&&e.pointerId!==drag.pid))return;
+  if(dragPending)setPx(drag.id,Math.round(dragPending.x+drag.dx),Math.round(dragPending.y+drag.dy));
+  drag=null;dragPending=null;if(dragRaf){cancelAnimationFrame(dragRaf);dragRaf=0;}
+  scroll.style.overflow="";
+  save();draw();syncFields();renderGroups();renderScripts();
+}
+ov.addEventListener("pointerup",endDrag);ov.addEventListener("pointercancel",endDrag);
+ov.addEventListener("lostpointercapture",function(){if(drag)endDrag({pointerId:drag.pid});});
+
+/* ---------- selection and fields ---------- */
+function select(id,keepFocus){st.sel=id;save();draw();syncFields();renderGroups();if(!keepFocus){}}
+function syncFields(){
+  var p=px(st.sel);$("fx").value=p.x;$("fy").value=p.y;
+  $("scale").value=st.S;$("tag").checked=st.tag;
+}
+function nudge(dx,dy){var p=px(st.sel);setPx(st.sel,p.x+dx,p.y+dy);save();draw();syncFields();renderGroups();renderScripts();}
+$("fx").addEventListener("input",function(e){var p=px(st.sel);if(e.target.value!=="")setPx(st.sel,+e.target.value,p.y);save();draw();renderGroups();renderScripts();});
+$("fy").addEventListener("input",function(e){var p=px(st.sel);if(e.target.value!=="")setPx(st.sel,p.x,+e.target.value);save();draw();renderGroups();renderScripts();});
+$("scale").addEventListener("input",function(e){var v=+e.target.value;if(v>=0.5&&v<=3){st.S=v;save();draw();renderScripts();}});
+$("tag").addEventListener("change",function(e){st.tag=e.target.checked;save();renderScripts();});
+(function(){
+  var holdT=null,holdI=null;
+  function stopHold(){if(holdT){clearTimeout(holdT);holdT=null;}if(holdI){clearInterval(holdI);holdI=null;}}
+  document.querySelectorAll(".pad button[data-d]").forEach(function(b){
+    function once(){var d=b.dataset.d.split(",");var s=+$("step").value;nudge(+d[0]*s,+d[1]*s);}
+    function start(e){e.preventDefault();stopHold();once();holdT=setTimeout(function(){holdI=setInterval(once,60);},350);}
+    b.addEventListener("pointerdown",start);
+    b.addEventListener("pointerup",stopHold);b.addEventListener("pointerleave",stopHold);b.addEventListener("pointercancel",stopHold);
+  });
+})();
+$("resetitem").addEventListener("click",function(){resetPos(st.sel);save();draw();syncFields();renderGroups();renderScripts();});
+$("resetall").addEventListener("click",function(){Object.keys(DEFAULTS).forEach(resetPos);save();draw();syncFields();renderGroups();renderScripts();});
+window.addEventListener("keydown",function(e){
+  var t=e.target&&e.target.tagName;if(t==="INPUT"||t==="SELECT"||t==="TEXTAREA")return;
+  var k=e.key,s=e.shiftKey?10:1;
+  if(k==="ArrowLeft"){nudge(-s,0);}else if(k==="ArrowRight"){nudge(s,0);}else if(k==="ArrowUp"){nudge(0,-s);}else if(k==="ArrowDown"){nudge(0,s);}else return;
+  e.preventDefault();
+});
+
+/* ---------- groups list ---------- */
+function renderGroups(){
+  var ul=$("groups");ul.innerHTML="";
+  GROUPS.forEach(function(g){
+    var li=document.createElement("li");li.className="grp";
+    var h=document.createElement("header");
+    var cb=document.createElement("input");cb.type="checkbox";cb.checked=st.inc[g.id];cb.id="inc_"+g.id;cb.setAttribute("aria-label","Include "+g.title);
+    cb.addEventListener("change",function(){st.inc[g.id]=cb.checked;save();draw();renderScripts();});
+    var lab=document.createElement("label");lab.setAttribute("for",cb.id);lab.textContent=g.title;
+    h.appendChild(cb);h.appendChild(lab);li.appendChild(h);
+    var box=document.createElement("div");box.className="items";
+    g.items.forEach(function(id){
+      var d=DEFAULTS[id],p=px(id);
+      var b=document.createElement("button");b.type="button";b.className="item";b.setAttribute("aria-pressed",String(id===st.sel));
+      b.innerHTML='<span class="chip" style="color:'+d.color+';border-color:'+d.color+'"></span><span class="name"></span><span class="pos"></span>';
+      b.querySelector(".name").textContent=d.label;b.querySelector(".pos").textContent=p.x+", "+p.y;
+      b.addEventListener("click",function(){select(id);});
+      box.appendChild(b);
+    });
+    li.appendChild(box);ul.appendChild(li);
+  });
+}
+
+/* ---------- Lua generation ---------- */
+function num(v){var s=(Math.round(v*10000)/10000).toString();return s;}
+function X(id){var p=px(id);return p.x>st.W/2?"W-"+num((st.W-p.x)/st.H)+"*H":num(p.x/st.H)+"*H";}
+function Y(id){var p=px(id);return p.y<=st.H/2?"H-"+num(p.y/st.H)+"*H":num((st.H-p.y)/st.H)+"*H";}
+var BTN='IB("images/hud.xml","equip_slot.tex","equip_slot.tex","equip_slot.tex")';
+function genRot(){
+  return 'local IB,Tx,P,S=require("widgets/imagebutton"),require("widgets/text"),ThePlayer,'+st.S
+  +' local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition()'
+  +' for _,v in ipairs(P._rot or {}) do v:Kill() end P._rot={}'
+  +' local function T(d) pcall(function() TheCamera:SetHeadingTarget(TheCamera:GetHeadingTarget()+d*45) end) end'
+  +' local function R(d,l,px,py) local b=c:AddChild('+BTN+') b:SetPosition((px-w.x)/k,(py-w.y)/k) b:SetScale(S) b.image:SetTint(1,1,1,0.5) b:AddChild(Tx(NUMBERFONT,44,l))'
+  +' local t local o=b.OnControl b.OnControl=function(s,n,dn) if n==CONTROL_ACCEPT or n==CONTROL_PRIMARY then if t then t:Cancel() t=nil end if dn then T(d) t=b.inst:DoPeriodicTask(0.4,function() T(d) end) end return true end return o and o(s,n,dn) end table.insert(P._rot,b) end'
+  +' R(1,"<",'+X("rotL")+','+Y("rotL")+') R(-1,">",'+X("rotR")+','+Y("rotR")+')';
+}
+function genSwap(){
+  return 'local IB=require("widgets/imagebutton") local Im=require("widgets/image") local P=ThePlayer local V=P.replica.inventory'
+  +' local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition() if P._qb then P._qb:Kill() end'
+  +' local function pick() local it=V:GetItems() for i=V:GetNumSlots(),1,-1 do local x=it[i] if x and x.replica.equippable then return x end end end'
+  +' local t="equip_slot.tex" local b=c:AddChild(IB("images/hud.xml",t,t,t)) b:SetPosition(('+X("swap")+'-w.x)/k,('+Y("swap")+'-w.y)/k) b:SetScale('+st.S+') b.image:SetTint(1,1,1,0.5)'
+  +' local ic=b:AddChild(Im("images/hud.xml",t)) ic:SetClickable(false)'
+  +' b.inst:DoPeriodicTask(0.25,function() pcall(function() local x=pick() if x then local i=x.replica.inventoryitem ic:SetTexture(i:GetAtlas(),i:GetImage()) ic:Show() else ic:Hide() end end) end)'
+  +' b:SetOnClick(function() local x=pick() if x then V:UseItemFromInvTile(x) end end) P._qb=b';
+}
+function genBox(){
+  return 'local IB,Tx,P=require("widgets/imagebutton"),require("widgets/text"),ThePlayer local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition()'
+  +' local S='+st.S+' for _,v in ipairs(P._mw or {}) do v:Kill() end P._mw={}'
+  +' local function mk(l,m,px,py) local b=c:AddChild('+BTN+') b:SetPosition((px-w.x)/k,(py-w.y)/k) b:SetScale(S) b.image:SetTint(1,1,1,0.5) b:AddChild(Tx(NUMBERFONT,34,l)) b.m=m'
+  +' b:SetOnClick(function() MW_MODE=(MW_MODE~=m) and m or false P._sn=false MW_Tint() end) table.insert(P._mw,b) end'
+  +' mk("BOX","bottom",'+X("box")+','+Y("box")+') mk("POT","top",'+X("pot")+','+Y("pot")+') P._mw[1].inst:DoPeriodicTask(0.5,function() pcall(MW_Watch) end)';
+}
+function genBadge1(){
+  return 'local P=ThePlayer local c=P.HUD.controls if P._mb then P._mb:Kill() end local st=c.status local hr=st.heart'
+  +' local mb=require("widgets/badge")(nil,P,{.08,.68,.08,1},"status_health",nil,nil,true) st:AddChild(mb) P._mb=mb'
+  +' local p=hr:GetPosition() mb:SetPosition(p.x,p.y) local hw=hr:GetWorldPosition() local y0=mb:GetWorldPosition().y mb:SetPosition(p.x,p.y+100) local s=(mb:GetWorldPosition().y-y0)/100'
+  +' local W,H=TheSim:GetScreenSize() mb:SetPosition(p.x+('+X("badge")+'-hw.x)/s,p.y+('+Y("badge")+'-hw.y)/s) mb:Hide()'
+  +' local F=rawget(_G,"MW_Fade") if F then F(mb) end';
+}
+function genBadge2(){
+  return 'local P=ThePlayer local mb=P._mb ChatHistory.MWH=ChatHistory.MWH or {} ChatHistory.MWH.mhp=function(t,msg) local a,b=msg:match("MHP:(%d+):(%d+)") if not a then return end a,b=tonumber(a),tonumber(b) mb:Show() mb:SetPercent(b>0 and a/b or 1,b) if mb.num then mb.num:SetString(tostring(a)) mb.num:Show() end return true end'
+  +' mb.OnUpdate=function() local r=P.replica.rider if not(r and r:IsRiding()) then mb:Hide() end end mb:StartUpdating()';
+}
+var LIMIT=950;
+function scriptsFor(g){
+  var tag=st.tag?" --M":"";
+  if(g==="rot")return [genRot()+tag];
+  if(g==="swap")return [genSwap()+tag];
+  if(g==="box")return [genBox()+tag];
+  if(g==="badge")return [genBadge1()+tag,genBadge2()+tag];
+  return [];
+}
+window.__gen=function(){var o={};GROUPS.forEach(function(g){o[g.id]=scriptsFor(g.id);});return o;};
+
+function copyText(t,btn){
+  function done(){var o=btn.textContent;btn.textContent="Copied";setTimeout(function(){btn.textContent=o;},1400);}
+  if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(done,function(){fallback();});}else fallback();
+  function fallback(){var a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy");done();}catch(e){btn.textContent="Select and copy by hand";}document.body.removeChild(a);}
+}
+function renderScripts(){
+  var host=$("scripts");host.innerHTML="";var any=false;
+  GROUPS.forEach(function(g){
+    if(!st.inc[g.id])return;any=true;
+    var list=scriptsFor(g.id);
+    var sec=document.createElement("article");sec.className="script";
+    var h=document.createElement("header");
+    var t=document.createElement("h2");t.textContent=g.title;
+    var m=document.createElement("span");m.className="meta";m.innerHTML="Mode: <b>"+g.mode+"</b>. "+g.note;
+    h.appendChild(t);h.appendChild(m);sec.appendChild(h);
+    list.forEach(function(code,i){
+      var wrap=document.createElement("div");wrap.style.marginTop=i?"12px":"0";
+      var ta=document.createElement("textarea");ta.className="code";ta.spellcheck=false;ta.value=code;ta.rows=Math.min(12,Math.max(4,Math.ceil(code.length/70)));
+      var row=document.createElement("div");row.className="row";
+      var b=document.createElement("button");b.type="button";b.className="btn small";b.textContent=list.length>1?"Copy line "+(i+1):"Copy";
+      var s=document.createElement("span");
+      function refreshCount(){var n=ta.value.length;s.className=n>LIMIT?"warn":"ok";s.textContent=n+" characters"+(n>LIMIT?" (may be too long for the console)":"");}
+      refreshCount();ta.addEventListener("input",refreshCount);
+      b.addEventListener("click",function(){copyText(ta.value,b);});
+      row.appendChild(b);row.appendChild(s);wrap.appendChild(ta);wrap.appendChild(row);sec.appendChild(wrap);
+    });
+    host.appendChild(sec);
+  });
+  if(!any){host.innerHTML='<p class="empty">Tick at least one button group to see its script.</p>';}
+}
+
+
+/* ---------- tooltip beside the title ---------- */
+(function(){
+  var btn=$("tipbtn"),tip=$("tip"),row=btn.parentNode,pinned=false;
+  function set(o){tip.hidden=!o;btn.setAttribute("aria-expanded",String(o));}
+  btn.addEventListener("click",function(e){e.stopPropagation();pinned=!pinned;set(pinned);});
+  row.addEventListener("mouseenter",function(){if(window.matchMedia("(hover:hover)").matches)set(true);});
+  row.addEventListener("mouseleave",function(){if(!pinned)set(false);});
+  btn.addEventListener("focus",function(){set(true);});
+  btn.addEventListener("blur",function(){if(!pinned)set(false);});
+  document.addEventListener("click",function(e){if(!btn.contains(e.target)&&!tip.contains(e.target)){pinned=false;set(false);}});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"){pinned=false;set(false);}});
+})();
+
+/* ---------- start ---------- */
+function render(){renderGroups();renderScripts();syncFields();}
+shot.dataset.name="Blank screen";shot.src=blankImage();
+})();
+</script>
+</body>
+</html>
