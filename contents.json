@@ -121,7 +121,7 @@
   },
   {
     "text": "ConsoleScreenSettings:Reset()",
-    "label": "11.2 Misc (Local) Resets the Entire Console History! Only use this if you updated, you will need to rerun all commands you like after running this. ",
+    "label": "11.2 Misc (Local) Resets the Entire Console History! You will need to rerun all commands if you use Clip 5 ",
     "spoiler": false
   },
   {
