@@ -135,7 +135,7 @@
   "spoiler": false
   },
   {
-  "text": "local P=ThePlayer local c=P.HUD.controls local IB,Tx=require(\"widgets/imagebutton\"),require(\"widgets/text\") local r1,r2=P._rot and P._rot[1],P._rot and P._rot[2] local a=r1 and r1:GetPosition() or {x=0,y=0} local d=r2 and r2:GetPosition() or {x=0,y=0} if P._ar then P._ar:Kill() end local b=c:AddChild(IB(\"images/hud.xml\",\"equip_slot.tex\",\"equip_slot.tex\",\"equip_slot.tex\")) b:SetPosition((a.x+d.x)/2,a.y+75) b:SetScale(r1 and r1:GetScale().x or 1.25) b.image:SetTint(1,1,1,.5) b:AddChild(Tx(NUMBERFONT,44,\"R\")) b:SetOnClick(function() local A=MW_AR if not A then return end if A.on then A.stop() else A.on=true b.image:SetTint(1,1,1,1) end end) P._ar=b Networking_SystemMessage(\"ar3\") --M",
+  "text": "local P=ThePlayer local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k,w=c:GetScale().x,c:GetWorldPosition() local r1,r2=P._rot and P._rot[1],P._rot and P._rot[2] local a=r1 and r1:GetPosition() local d=r2 and r2:GetPosition() local y=(c.inv.inv[1]:GetWorldPosition().y-34-w.y)/k local bx,by=(W-0.175*H-w.x)/k,y+75 if a and d and (a.x~=0 or a.y~=0) then bx,by=(a.x+d.x)/2,a.y+75 end if P._ar then P._ar:Kill() end local IB,Tx=require(\"widgets/imagebutton\"),require(\"widgets/text\") local b=c:AddChild(IB(\"images/hud.xml\",\"equip_slot.tex\",\"equip_slot.tex\",\"equip_slot.tex\")) b:SetPosition(bx,by) b:SetScale(r1 and r1:GetScale().x or 1.25) b.image:SetTint(1,1,1,.5) b:AddChild(Tx(NUMBERFONT,44,\"R\")) b:SetOnClick(function() local A=MW_AR if not A then return end if A.on then A.stop() else A.on=true b.image:SetTint(1,1,1,1) end end) P._ar=b Networking_SystemMessage(\"ar3\") --M",
   "label": "12.3 (Local) Autorun (3/3)",
   "spoiler": false
   },
