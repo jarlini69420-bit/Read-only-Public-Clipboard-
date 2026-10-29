@@ -11,22 +11,22 @@
   },
   {
     "text": "local IB=require(\"widgets/imagebutton\") local Im=require(\"widgets/image\") local P=ThePlayer local V=P.replica.inventory local X,Y=420,-280 local R=P._rot and P._rot[1] if P._qb then P._qb:Kill() end local function pick() local it=V:GetItems() for i=V:GetNumSlots(),1,-1 do local x=it[i] if x and x.replica.equippable then return x end end end local b=P.HUD.controls:AddChild(IB(\"images/hud.xml\",\"equip_slot.tex\",\"equip_slot.tex\",\"equip_slot.tex\")) b:SetPosition(X,Y) b:SetScale(R and R:GetScale().x or 1.25) b.image:SetTint(1,1,1,0.5) local ic=b:AddChild(Im(\"images/hud.xml\",\"equip_slot.tex\")) ic:SetClickable(false) ic:Hide() b.inst:DoPeriodicTask(0.25,function() pcall(function() local x=pick() if x then local i=x.replica.inventoryitem ic:SetTexture(i:GetAtlas(),i:GetImage()) ic:Show() else ic:Hide() end end) end) b:SetOnClick(function() local x=pick() if x then V:UseItemFromInvTile(x) end end) P._qb=b --M",
-    "label": "3 (Local -toggle off Remote before running) Quick Swap Button, Swaps the right most Equipment in inventory with preview",
+    "label": "3 (Local) Quick Swap Button, Swaps the right most Equipment in inventory with preview",
     "spoiler": false
   },
   {
     "text": "MWK={\"HOUNDS\",\"WORMS\",\"DEERCLOPS\",\"BEARGER\",\"ANTLION\"} local function red(m) if not pcall(function() ChatHistory:AddToHistory(ChatTypes.SystemMessage,nil,nil,nil,m,{1,0.2,0.2,1},nil,nil,true) end) then Networking_SystemMessage(m) end end local function warn(k) for _,w in ipairs(MWK) do if k:find(w) then return true end end end local T=require(\"components/talker\") T.OrigSay=T.OrigSay or T.Say T.Say=function(self,s,...) pcall(function() if self.inst==ThePlayer and type(s)==\"string\" then for _,n in ipairs({string.upper(self.inst.prefab),\"GENERIC\"}) do for k,v in pairs(STRINGS.CHARACTERS[n] or {}) do if type(k)==\"string\" and warn(k) and (v==s or type(v)==\"table\" and table.contains(v,s)) then red(self.inst:GetDisplayName()..\": \"..s) return end end end end end) return T.OrigSay(self,s,...) end --M",
-    "label": "4 (Local -toggle off Remote before running) Hounds or boss Event Warnings sent to chat in red text",
+    "label": "4 (Local) Hounds or boss Event Warnings sent to chat in red text",
     "spoiler": false
   },
   {
     "text": "local n=0 for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory()) do if v.str:find(\"--M\",1,true) and not v.str:find(\"--RUN\",1,true) then n=n+1 local ok,e=pcall(function() if v.remote then local x,_,z=TheSim:ProjectScreenPos(TheSim:GetPosition()) TheNet:SendRemoteExecute(v.str,x,z) else ExecuteConsoleCommand(v.str) end end) if not ok then Networking_SystemMessage(\"MWRUN: \"..tostring(e)) end end end Networking_SystemMessage(\"MWRUN ran \"..n) --RUN",
-    "label": "5 (Local -toggle off Remote before running) Run all --M Tagged commands",
+    "label": "5 (Local) Run all --M Tagged commands",
     "spoiler": false
   },
   {
   "text": "local m = getmetatable(TheWorld.Map).__index; m.OrigLerp = m.OrigLerp or m.SetOverlayLerp; m.OrigLerp(TheWorld.Map, 0); m.SetOverlayLerp = function() end --M",
-  "label": "6 (Local -toggle off Remote before running) Winter Snow Turf Remover",
+  "label": "6 (Local) Winter Snow Turf Remover",
   "spoiler": false
   },
   {
@@ -66,7 +66,12 @@
   },
   {
   "text": "local h=ConsoleScreenSettings:GetConsoleHistory() for i=#h,1,-1 do local s=h[i].str if s:find(\"mw_aq\",1,true) or s:find(\"MWS=\",1,true) then table.remove(h,i) end end ConsoleScreenSettings.dirty=true ConsoleScreenSettings:Save() --RUN",
-  "label": "8.3 (Local) Add new commands to the initial save",
+  "label": "8.3 (Local) Add new commands in the persistent string",
+  "spoiler": false
+  },
+  {
+  "text": "local L,K={},{} local function add(l) local k=l:sub(2,45) if not K[k] then L[#L+1]=l K[k]=true end end for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory()) do if v.str:find(\"--M\",1,true) and not v.str:find(\"--RUN\",1,true) then add((v.remote and \"R\" or \"L\")..v.str) end end TheSim:SetPersistentString(\"mw_macro\",table.concat(L,\"\\n\"),false) Networking_SystemMessage(\"MW macro overwritten! Total lines: \"..#L) --RUN",
+  "label": "8.4 (Local) Overwrites the persistent string with the --M tagged commands in console history | Only use if you want to redo your entire cmd setup due to a button reposition or etc",
   "spoiler": false
   },
   {
@@ -111,12 +116,12 @@
   },
   {
     "text": "local h=ConsoleScreenSettings:GetConsoleHistory() for i=#h,1,-1 do if not (h[i].str:find(\"--M\",1,true) or h[i].str:find(\"--RUN\",1,true)) then table.remove(h,i) end end ConsoleScreenSettings.dirty=true ConsoleScreenSettings:Save() --RUN",
-    "label": "Misc (Local -toggle off Remote before running) Deletes commands without --M tags, run this before the commands get overwritten by your other commands",
+    "label": "11.1 Misc (Local) Deletes commands without --M tags, run this before the commands get overwritten by your other commands",
     "spoiler": false
   },
   {
     "text": "ConsoleScreenSettings:Reset()",
-    "label": "Misc (Local -toggle off Remote before running) Resets the Entire Console History! Only use this if you updated, you will need to rerun all commands you like after running this. ",
+    "label": "11.2 Misc (Local) Resets the Entire Console History! Only use this if you updated, you will need to rerun all commands you like after running this. ",
     "spoiler": false
   },
   {
