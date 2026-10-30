@@ -216,6 +216,7 @@ var KEY="dst_button_placer_v1";
 var GROUPS=[
   {id:"rot",title:"Rotate buttons",items:["rotL","rotR"],mode:"Local",note:"Rebuilds the camera rotate buttons. Replaces the older rotate line when saved."},
   {id:"swap",title:"Quick-swap button",items:["swap"],mode:"Local",note:"Equips your rightmost equippable. Paste it after the rotate buttons."},
+  {id:"autorun",title:"Autorun (R)",items:["autorun"],mode:"Local",note:"Three lines: paste 1 then 2 then 3. Place R above the gap between rotate buttons. Steer with the stick; attack/interact turns it off."},
   {id:"box",title:"BOX and POT buttons",items:["box","pot"],mode:"Local",note:"Needs 7.1, 7.2, 7.3 and 7.4 pasted first or your game will crash"},
   {id:"badge",title:"Beefalo health badge",items:["badge"],mode:"Local",note:"Needs 9.1 and 9.3 pasted first. Then paste the two beefalo lines"}
 ];
@@ -223,11 +224,12 @@ var DEFAULTS={
   rotL:{label:"Rotate left",glyph:"<",x:2128/2400,y:976/1080,kind:"btn",color:"#b5842a"},
   rotR:{label:"Rotate right",glyph:">",x:2293/2400,y:976/1080,kind:"btn",color:"#b5842a"},
   swap:{label:"Quick swap",glyph:"S",x:2040/2400,y:790/1080,kind:"btn",color:"#2e86c1"},
+  autorun:{label:"Autorun R",glyph:"R",x:2210/2400,y:880/1080,kind:"btn",color:"#e8a838"},
   box:{label:"BOX",glyph:"BOX",x:290/2400,y:975/1080,kind:"btn",color:"#c0603a"},
   pot:{label:"POT",glyph:"POT",x:171/2400,y:975/1080,kind:"btn",color:"#8e5ac0"},
   badge:{label:"Beefalo badge",glyph:"HP",x:2092/2400,y:226/1080,kind:"badge",color:"#2fa36b"}
 };
-var st={W:2400,H:1080,pos:{},S:1.25,tag:false,inc:{rot:true,swap:true,box:true,badge:true},sel:"rotL"};
+var st={W:2400,H:1080,pos:{},S:1.25,tag:false,inc:{rot:true,swap:true,autorun:true,box:true,badge:true},sel:"rotL"};
 function resetPos(id){st.pos[id]={x:DEFAULTS[id].x,y:DEFAULTS[id].y};}
 Object.keys(DEFAULTS).forEach(resetPos);
 
@@ -425,11 +427,21 @@ function genBadge2(){
   return 'local P=ThePlayer local mb=P._mb ChatHistory.MWH=ChatHistory.MWH or {} ChatHistory.MWH.mhp=function(t,msg) local a,b=msg:match("MHP:(%d+):(%d+)") if not a then return end a,b=tonumber(a),tonumber(b) mb:Show() mb:SetPercent(b>0 and a/b or 1,b) if mb.num then mb.num:SetString(tostring(a)) mb.num:Show() end return true end'
   +' mb.OnUpdate=function() local r=P.replica.rider if not(r and r:IsRiding()) then mb:Hide() end end mb:StartUpdating()';
 }
+function genAutorun1(){
+  return 'local P=ThePlayer local O=rawget(_G,"MW_AR") if O and O.stop then O.stop() end local S=P.HUD.controls.virtualstick local A={on=false,hx=0,hy=0,pu=0} MW_AR=A function A.stop() A.on=false if S.touchID==nil then S.dirX,S.dirY,S.length=0,0,0 end if P._ar then P._ar.image:SetTint(1,1,1,.5) end end S.OrigOU=S.OrigOU or S.OnUpdate S.OnUpdate=function(s,dt) s.OrigOU(s,dt) if not A.on then return end local g=P.sg if g and g:HasStateTag("attack") then A.stop() return end if s.touchID~=nil then if s.length>0 then A.hx,A.hy=s.dirX,s.dirY end elseif GetTime()<A.pu or (g and g:HasStateTag("busy")) then s.dirX,s.dirY,s.length=0,0,0 else s.dirX,s.dirY,s.length=A.hx,A.hy,(A.hx~=0 or A.hy~=0) and 1 or 0 end end Networking_SystemMessage("ar1")';
+}
+function genAutorun2(){
+  return 'local P=ThePlayer local A=MW_AR local pc=P.components.playercontroller if not(A and pc) then Networking_SystemMessage("ar2 fail") return end pc.OrigDA=pc.OrigDA or pc.DoAction pc.DoAction=function(s,a,...) if A.on and a and a.action then local i=a.action.id if i=="EAT" then A.pu=GetTime()+1.2 elseif i=="EQUIP" or i=="UNEQUIP" then A.pu=GetTime()+.3 elseif i~="LOOKAT" and i~="WALKTO" then A.stop() end end return pc.OrigDA(s,a,...) end Networking_SystemMessage("ar2")';
+}
+function genAutorun3(){
+  return 'local P=ThePlayer local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition() if P._ar then P._ar:Kill() end local IB,Tx=require("widgets/imagebutton"),require("widgets/text") local b=c:AddChild(IB("images/hud.xml","equip_slot.tex","equip_slot.tex","equip_slot.tex")) b:SetPosition(('+X("autorun")+'-w.x)/k,('+Y("autorun")+'-w.y)/k) b:SetScale('+st.S+') b.image:SetTint(1,1,1,.5) b:AddChild(Tx(NUMBERFONT,44,"R")) b:SetOnClick(function() local A=MW_AR if not A then return end if A.on then A.stop() else A.on=true b.image:SetTint(1,1,1,1) end end) P._ar=b Networking_SystemMessage("ar3")';
+}
 var LIMIT=950;
 function scriptsFor(g){
   var tag=st.tag?" --M":"";
   if(g==="rot")return [genRot()+tag];
   if(g==="swap")return [genSwap()+tag];
+  if(g==="autorun")return [genAutorun1()+tag,genAutorun2()+tag,genAutorun3()+tag];
   if(g==="box")return [genBox()+tag];
   if(g==="badge")return [genBadge1()+tag,genBadge2()+tag];
   return [];
