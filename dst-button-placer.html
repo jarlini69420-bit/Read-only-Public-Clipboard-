@@ -190,6 +190,19 @@ button,input,select,textarea{font:inherit;color:inherit}
             <span>Only check when you're satisfied with the placement</span>
           </p>
         </div>
+
+        <!-- dynamic script → ? markers -->
+        <div class="dyn" style="width:100%;max-width:480px;margin-top:8px;display:grid;gap:8px;border-top:1px solid var(--line);padding-top:12px;">
+          <label style="font-size:.88rem;color:var(--ink2);font-weight:600">Paste any script to place ? markers</label>
+          <textarea id="dynin" spellcheck="false" placeholder="Paste a Local console script with SetPosition / R( / screen W,H coords…" style="width:100%;min-height:90px;padding:10px;border:1.5px solid var(--line);background:var(--bg);border-radius:3px;font:12px/1.4 var(--mono);resize:vertical;color:var(--ink)"></textarea>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <button class="btn small primary" type="button" id="dynparse">Find coordinates</button>
+            <button class="btn small" type="button" id="dynclear">Clear ? markers</button>
+            <button class="btn small" type="button" id="dyncopy">Copy updated script</button>
+          </div>
+          <p class="hint" id="dynstatus" style="text-align:left">No dynamic markers yet.</p>
+          <textarea id="dynout" spellcheck="false" hidden style="width:100%;min-height:90px;padding:10px;border:1.5px solid var(--line);background:var(--code-bg);border-radius:3px;font:12px/1.4 var(--mono);resize:vertical;color:var(--ink)"></textarea>
+        </div>
       </div>
     </section>
 
@@ -216,7 +229,7 @@ var KEY="dst_button_placer_v1";
 var GROUPS=[
   {id:"rot",title:"Rotate buttons",items:["rotL","rotR"],mode:"Local",note:"Rebuilds the camera rotate buttons. Replaces the older rotate line when saved."},
   {id:"swap",title:"Quick-swap button",items:["swap"],mode:"Local",note:"Equips your rightmost equippable. Paste it after the rotate buttons."},
-  {id:"autorun",title:"Autorun (R)",items:["autorun"],mode:"Local",note:"Three lines: paste 1 then 2 then 3. Place R above the gap between rotate buttons. Steer with the stick; attack/interact turns it off."},
+  {id:"autorun",title:"Autorun (R)",items:["autorun"],mode:"Local",note:"Three lines: paste 1 then 2 then 3. Place R above the gap between rotate buttons."},
   {id:"box",title:"BOX and POT buttons",items:["box","pot"],mode:"Local",note:"Needs 7.1, 7.2, 7.3 and 7.4 pasted first or your game will crash"},
   {id:"badge",title:"Beefalo health badge",items:["badge"],mode:"Local",note:"Needs 9.1 and 9.3 pasted first. Then paste the two beefalo lines"}
 ];
@@ -230,6 +243,7 @@ var DEFAULTS={
   badge:{label:"Beefalo badge",glyph:"HP",x:2092/2400,y:226/1080,kind:"badge",color:"#2fa36b"}
 };
 var st={W:2400,H:1080,pos:{},S:1.25,tag:false,inc:{rot:true,swap:true,autorun:true,box:true,badge:true},sel:"rotL"};
+var dyn={script:"",marks:[],sel:null};
 function resetPos(id){st.pos[id]={x:DEFAULTS[id].x,y:DEFAULTS[id].y};}
 Object.keys(DEFAULTS).forEach(resetPos);
 
@@ -305,7 +319,20 @@ function draw(){
     }
     gg.addEventListener("pointerdown",function(e){startDrag(e,id,gg);});
   });
-  $("selname").textContent=DEFAULTS[st.sel].label+"  ·  "+sel.x+", "+sel.y;
+  /* dynamic ? markers from pasted script */
+  dyn.marks.forEach(function(m,i){
+    var isSel=dyn.sel===i;
+    var gg=el("g",{"class":"ghost",transform:"translate("+m.x+","+m.y+")","data-dyn":String(i)},ov);
+    el("rect",{x:-bw/2,y:-bw/2,width:bw,height:bw,rx:bw*0.06,fill:"#6b7280","fill-opacity":".55",stroke:isSel?"#e7b24a":"#9ca3af","stroke-width":isSel?tick*1.1:tick*.7},gg);
+    el("text",{y:bw*0.12,"text-anchor":"middle",fill:"#fff","font-size":bw*0.45,"font-family":"sans-serif","font-weight":700},gg).textContent=m.label||"?";
+    gg.addEventListener("pointerdown",function(e){startDynDrag(e,i,gg);});
+  });
+  if(dyn.sel!=null&&dyn.marks[dyn.sel]){
+    var dm=dyn.marks[dyn.sel];
+    $("selname").textContent="? "+(dm.label||(dyn.sel+1))+"  ·  "+Math.round(dm.x)+", "+Math.round(dm.y);
+  }else{
+    $("selname").textContent=DEFAULTS[st.sel].label+"  ·  "+sel.x+", "+sel.y;
+  }
 }
 function groupOf(id){for(var i=0;i<GROUPS.length;i++)if(GROUPS[i].items.indexOf(id)>-1)return GROUPS[i].id;}
 
@@ -313,19 +340,39 @@ function groupOf(id){for(var i=0;i<GROUPS.length;i++)if(GROUPS[i].items.indexOf(
 var drag=null,dragRaf=0,dragPending=null;
 function svgPoint(e){var pt=ov.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;var m=ov.getScreenCTM();return m?pt.matrixTransform(m.inverse()):{x:0,y:0};}
 function startDrag(e,id,node){
-  e.preventDefault();e.stopPropagation();select(id,true);
-  var p=svgPoint(e),c=px(id);drag={id:id,dx:c.x-p.x,dy:c.y-p.y,pid:e.pointerId};
+  e.preventDefault();e.stopPropagation();dyn.sel=null;select(id,true);
+  var p=svgPoint(e),c=px(id);drag={kind:"btn",id:id,dx:c.x-p.x,dy:c.y-p.y,pid:e.pointerId};
   scroll.style.overflow="hidden";
   try{node.setPointerCapture(e.pointerId);}catch(x){}
 }
-function applyDrag(){dragRaf=0;if(!drag||!dragPending)return;setPx(drag.id,Math.round(dragPending.x+drag.dx),Math.round(dragPending.y+drag.dy));draw();syncFields();renderGroups();}
+function startDynDrag(e,idx,node){
+  e.preventDefault();e.stopPropagation();
+  dyn.sel=idx;var m=dyn.marks[idx],p=svgPoint(e);
+  drag={kind:"dyn",idx:idx,dx:m.x-p.x,dy:m.y-p.y,pid:e.pointerId};
+  scroll.style.overflow="hidden";
+  try{node.setPointerCapture(e.pointerId);}catch(x){}
+  draw();syncFields();
+}
+function applyDrag(){
+  dragRaf=0;if(!drag||!dragPending)return;
+  var nx=Math.round(dragPending.x+drag.dx),ny=Math.round(dragPending.y+drag.dy);
+  nx=Math.max(0,Math.min(st.W,nx));ny=Math.max(0,Math.min(st.H,ny));
+  if(drag.kind==="dyn"){dyn.marks[drag.idx].x=nx;dyn.marks[drag.idx].y=ny;rebuildDynScript();}
+  else{setPx(drag.id,nx,ny);}
+  draw();syncFields();renderGroups();
+}
 ov.addEventListener("pointermove",function(e){
   if(!drag||e.pointerId!==drag.pid)return;
   e.preventDefault();dragPending=svgPoint(e);if(!dragRaf)dragRaf=requestAnimationFrame(applyDrag);
 },{passive:false});
 function endDrag(e){
   if(!drag||(e&&e.pointerId!==drag.pid))return;
-  if(dragPending)setPx(drag.id,Math.round(dragPending.x+drag.dx),Math.round(dragPending.y+drag.dy));
+  if(dragPending){
+    var nx=Math.round(dragPending.x+drag.dx),ny=Math.round(dragPending.y+drag.dy);
+    nx=Math.max(0,Math.min(st.W,nx));ny=Math.max(0,Math.min(st.H,ny));
+    if(drag.kind==="dyn"){dyn.marks[drag.idx].x=nx;dyn.marks[drag.idx].y=ny;rebuildDynScript();}
+    else setPx(drag.id,nx,ny);
+  }
   drag=null;dragPending=null;if(dragRaf){cancelAnimationFrame(dragRaf);dragRaf=0;}
   scroll.style.overflow="";
   save();draw();syncFields();renderGroups();renderScripts();
@@ -334,14 +381,29 @@ ov.addEventListener("pointerup",endDrag);ov.addEventListener("pointercancel",end
 ov.addEventListener("lostpointercapture",function(){if(drag)endDrag({pointerId:drag.pid});});
 
 /* ---------- selection and fields ---------- */
-function select(id,keepFocus){st.sel=id;save();draw();syncFields();renderGroups();if(!keepFocus){}}
+function select(id,keepFocus){st.sel=id;dyn.sel=null;save();draw();syncFields();renderGroups();if(!keepFocus){}}
 function syncFields(){
-  var p=px(st.sel);$("fx").value=p.x;$("fy").value=p.y;
+  if(dyn.sel!=null&&dyn.marks[dyn.sel]){var m=dyn.marks[dyn.sel];$("fx").value=Math.round(m.x);$("fy").value=Math.round(m.y);}
+  else{var p=px(st.sel);$("fx").value=p.x;$("fy").value=p.y;}
   $("scale").value=st.S;$("tag").checked=st.tag;
 }
-function nudge(dx,dy){var p=px(st.sel);setPx(st.sel,p.x+dx,p.y+dy);save();draw();syncFields();renderGroups();renderScripts();}
-$("fx").addEventListener("input",function(e){var p=px(st.sel);if(e.target.value!=="")setPx(st.sel,+e.target.value,p.y);save();draw();renderGroups();renderScripts();});
-$("fy").addEventListener("input",function(e){var p=px(st.sel);if(e.target.value!=="")setPx(st.sel,p.x,+e.target.value);save();draw();renderGroups();renderScripts();});
+function nudge(dx,dy){
+  if(dyn.sel!=null&&dyn.marks[dyn.sel]){
+    var m=dyn.marks[dyn.sel];m.x=Math.max(0,Math.min(st.W,m.x+dx));m.y=Math.max(0,Math.min(st.H,m.y+dy));
+    rebuildDynScript();save();draw();syncFields();return;
+  }
+  var p=px(st.sel);setPx(st.sel,p.x+dx,p.y+dy);save();draw();syncFields();renderGroups();renderScripts();
+}
+$("fx").addEventListener("input",function(e){
+  if(e.target.value==="")return;
+  if(dyn.sel!=null&&dyn.marks[dyn.sel]){dyn.marks[dyn.sel].x=+e.target.value;rebuildDynScript();draw();return;}
+  var p=px(st.sel);setPx(st.sel,+e.target.value,p.y);save();draw();renderGroups();renderScripts();
+});
+$("fy").addEventListener("input",function(e){
+  if(e.target.value==="")return;
+  if(dyn.sel!=null&&dyn.marks[dyn.sel]){dyn.marks[dyn.sel].y=+e.target.value;rebuildDynScript();draw();return;}
+  var p=px(st.sel);setPx(st.sel,p.x,+e.target.value);save();draw();renderGroups();renderScripts();
+});
 $("scale").addEventListener("input",function(e){var v=+e.target.value;if(v>=0.5&&v<=3){st.S=v;save();draw();renderScripts();}});
 $("tag").addEventListener("change",function(e){st.tag=e.target.checked;save();renderScripts();});
 (function(){
@@ -479,6 +541,115 @@ function renderScripts(){
   if(!any){host.innerHTML='<p class="empty">Tick at least one button group to see its script.</p>';}
 }
 
+
+/* ---------- dynamic script → ? markers ---------- */
+function parseScreenExprX(expr,W,H){
+  expr=String(expr).replace(/\s+/g,"");
+  var m=expr.match(/^W\*([0-9.]+)$/); if(m) return W*(+m[1]); // W*.694
+  m=expr.match(/^([0-9.]+)\*W$/); if(m) return (+m[1])*W;
+  m=expr.match(/^W-([0-9.]+)\*H$/); if(m) return W-(+m[1])*H;
+  m=expr.match(/^([0-9.]+)\*H$/); if(m) return (+m[1])*H;
+  m=expr.match(/^([0-9.]+)$/); if(m) return +m[1];
+  return null;
+}
+function parseScreenExprY(expr,W,H){
+  // widget/screen Y is bottom-origin; screenshot Y is top-origin → shotY = H - gameY
+  expr=String(expr).replace(/\s+/g,"");
+  var m=expr.match(/^H\*([0-9.]+)$/); if(m) return H*(1-(+m[1])); // H*.224
+  m=expr.match(/^([0-9.]+)\*H$/); if(m) return H-(+m[1])*H;
+  m=expr.match(/^H-([0-9.]+)\*H$/); if(m) return (+m[1])*H;
+  m=expr.match(/^([0-9.]+)$/); if(m) return +m[1];
+  return null;
+}
+function detectStyle(expr){
+  expr=String(expr).replace(/\s+/g,"");
+  if(/^W\*[0-9.]+$/.test(expr)||/^H\*[0-9.]+$/.test(expr)||/^[0-9.]+\*W$/.test(expr)) return "frac";
+  return "unitH";
+}
+function exprXFromPx(x,style){
+  x=Math.round(x);
+  if(style==="frac") return "W*"+num(x/st.W);
+  return x>st.W/2?"W-"+num((st.W-x)/st.H)+"*H":num(x/st.H)+"*H";
+}
+function exprYFromPx(y,style){
+  y=Math.round(y);
+  if(style==="frac") return "H*"+num((st.H-y)/st.H);
+  return y<=st.H/2?"H-"+num(y/st.H)+"*H":num((st.H-y)/st.H)+"*H";
+}
+function parseDynScript(text){
+  var W=st.W,H=st.H,marks=[],seen={};
+  function add(x,y,label,x0,x1,y0,y1,xExpr,yExpr){
+    if(x==null||y==null||!isFinite(x)||!isFinite(y))return;
+    var key=Math.round(x)+","+Math.round(y)+":"+x0;
+    if(seen[key])return;seen[key]=1;
+    marks.push({x:Math.round(x),y:Math.round(y),label:label||("?"+(marks.length+1)),x0:x0,x1:x1,y0:y0,y1:y1,style:detectStyle(xExpr)||detectStyle(yExpr)||"unitH"});
+  }
+  function spans(full,part,from){var i=full.indexOf(part,from||0);return i<0?null:{a:i,b:i+part.length};}
+  // SetPosition((X-w.x)/k,(Y-w.y)/k) — X/Y can be W*.694, H*.224, W-n*H, n*H, …
+  var re1=/SetPosition\s*\(\s*\(\s*([^)]+?)\s*-\s*w\.x\s*\)\s*\/\s*k\s*,\s*\(\s*([^)]+?)\s*-\s*w\.y\s*\)\s*\/\s*k\s*\)/g,m;
+  while((m=re1.exec(text))){
+    var full=m[0],base=m.index,sx=spans(full,m[1]),sy=spans(full,m[2],sx?sx.b:0);
+    if(!sx||!sy)continue;
+    add(parseScreenExprX(m[1],W,H),parseScreenExprY(m[2],W,H),"?",base+sx.a,base+sx.b,base+sy.a,base+sy.b,m[1],m[2]);
+  }
+  var re2=/R\s*\(\s*-?\d+\s*,\s*"([^"]*)"\s*,\s*([^,]+)\s*,\s*([^)]+)\)/g;
+  while((m=re2.exec(text))){
+    var f2=m[0],b2=m.index,sx2=spans(f2,m[2]),sy2=spans(f2,m[3],sx2?sx2.b:0);
+    if(!sx2||!sy2)continue;
+    add(parseScreenExprX(m[2],W,H),parseScreenExprY(m[3],W,H),m[1]||"?",b2+sx2.a,b2+sx2.b,b2+sy2.a,b2+sy2.b,m[2],m[3]);
+  }
+  var re3=/mk\s*\(\s*"([^"]+)"\s*,\s*"[^"]+"\s*,\s*([^,]+)\s*,\s*([^)]+)\)/g;
+  while((m=re3.exec(text))){
+    var f3=m[0],b3=m.index,sx3=spans(f3,m[2]),sy3=spans(f3,m[3],sx3?sx3.b:0);
+    if(!sx3||!sy3)continue;
+    add(parseScreenExprX(m[2],W,H),parseScreenExprY(m[3],W,H),m[1],b3+sx3.a,b3+sx3.b,b3+sy3.a,b3+sy3.b,m[2],m[3]);
+  }
+  return marks;
+}
+function rebuildDynScript(){
+  if(!dyn.script||!dyn.marks.length)return;
+  var s=dyn.script,ops=[];
+  dyn.marks.forEach(function(m){
+    if(m.x0==null)return;
+    var style=m.style||"unitH";
+    ops.push({a:m.x0,b:m.x1,t:exprXFromPx(m.x,style)});
+    ops.push({a:m.y0,b:m.y1,t:exprYFromPx(m.y,style)});
+  });
+  ops.sort(function(a,b){return b.a-a.a;});
+  ops.forEach(function(o){s=s.slice(0,o.a)+o.t+s.slice(o.b);});
+  dyn.script=s;
+  var fresh=parseDynScript(s);
+  for(var i=0;i<dyn.marks.length&&i<fresh.length;i++){
+    dyn.marks[i].x0=fresh[i].x0;dyn.marks[i].x1=fresh[i].x1;
+    dyn.marks[i].y0=fresh[i].y0;dyn.marks[i].y1=fresh[i].y1;
+    dyn.marks[i].style=fresh[i].style;
+  }
+  var out=$("dynout");if(out){out.hidden=false;out.value=s;}
+  var stEl=$("dynstatus");if(stEl)stEl.textContent=dyn.marks.length+" marker(s) — drag to move, then Copy updated script.";
+}
+function runDynParse(){
+  var text=($("dynin")&&$("dynin").value)||"";
+  if(!text.trim()){$("dynstatus").textContent="Paste a script first.";return;}
+  dyn.script=text;dyn.marks=parseDynScript(text);dyn.sel=null;
+  if(!dyn.marks.length){
+    $("dynstatus").textContent="No screen coordinates found. Need SetPosition((X-w.x)/k,(Y-w.y)/k) or R(...,X,Y) with W/H math.";
+    $("dynout").hidden=true;draw();return;
+  }
+  $("dynout").hidden=false;$("dynout").value=text;
+  $("dynstatus").textContent="Found "+dyn.marks.length+" position(s). Drag the ? markers, then Copy updated script.";
+  draw();
+}
+(function(){
+  var bp=$("dynparse"),bc=$("dynclear"),bo=$("dyncopy");
+  if(bp)bp.addEventListener("click",runDynParse);
+  if(bc)bc.addEventListener("click",function(){dyn.marks=[];dyn.sel=null;dyn.script="";if($("dynout")){$("dynout").value="";$("dynout").hidden=true;}if($("dynstatus"))$("dynstatus").textContent="No dynamic markers yet.";draw();});
+  if(bo)bo.addEventListener("click",function(){
+    rebuildDynScript();
+    var t=(dyn.script||($("dynout")&&$("dynout").value)||"");
+    if(!t){alert("Nothing to copy");return;}
+    copyText(t,bo);
+  });
+})();
 
 /* ---------- tooltip beside the title ---------- */
 (function(){
