@@ -459,51 +459,51 @@ function renderGroups(){
 function num(v){var s=(Math.round(v*10000)/10000).toString();return s;}
 function X(id){var p=px(id);return p.x>st.W/2?"W-"+num((st.W-p.x)/st.H)+"*H":num(p.x/st.H)+"*H";}
 function Y(id){var p=px(id);return p.y<=st.H/2?"H-"+num(p.y/st.H)+"*H":num((st.H-p.y)/st.H)+"*H";}
-var BTN='IB("images/hud.xml","equip_slot.tex","equip_slot.tex","equip_slot.tex")';
+var BTN='IB([[images/hud.xml]],[[equip_slot.tex]],[[equip_slot.tex]],[[equip_slot.tex]])';
 function genRot(){
-  return 'local IB,Tx,P,S=require("widgets/imagebutton"),require("widgets/text"),ThePlayer,'+st.S
+  return 'local IB,Tx,P,S=require([[widgets/imagebutton]]),require([[widgets/text]]),ThePlayer,'+st.S
   +' local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition()'
   +' for _,v in ipairs(P._rot or {}) do v:Kill() end P._rot={}'
   +' local function T(d) pcall(function() TheCamera:SetHeadingTarget(TheCamera:GetHeadingTarget()+d*45) end) end'
   +' local function R(d,l,px,py) local b=c:AddChild('+BTN+') b:SetPosition((px-w.x)/k,(py-w.y)/k) b:SetScale(S) b.image:SetTint(1,1,1,0.5) b:AddChild(Tx(NUMBERFONT,44,l))'
   +' local t local o=b.OnControl b.OnControl=function(s,n,dn) if n==CONTROL_ACCEPT or n==CONTROL_PRIMARY then if t then t:Cancel() t=nil end if dn then T(d) t=b.inst:DoPeriodicTask(0.4,function() T(d) end) end return true end return o and o(s,n,dn) end table.insert(P._rot,b) end'
-  +' R(1,"<",'+X("rotL")+','+Y("rotL")+') R(-1,">",'+X("rotR")+','+Y("rotR")+')';
+  +' R(1,[[<]],'+X("rotL")+','+Y("rotL")+') R(-1,[[>]],'+X("rotR")+','+Y("rotR")+')';
 }
 function genSwap(){
-  return 'local IB=require("widgets/imagebutton") local Im=require("widgets/image") local P=ThePlayer local V=P.replica.inventory'
+  return 'local IB=require([[widgets/imagebutton]]) local Im=require([[widgets/image]]) local P=ThePlayer local V=P.replica.inventory'
   +' local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition() if P._qb then P._qb:Kill() end'
   +' local function pick() local it=V:GetItems() for i=V:GetNumSlots(),1,-1 do local x=it[i] if x and x.replica.equippable then return x end end end'
-  +' local t="equip_slot.tex" local b=c:AddChild(IB("images/hud.xml",t,t,t)) b:SetPosition(('+X("swap")+'-w.x)/k,('+Y("swap")+'-w.y)/k) b:SetScale('+st.S+') b.image:SetTint(1,1,1,0.5)'
-  +' local ic=b:AddChild(Im("images/hud.xml",t)) ic:SetClickable(false)'
+  +' local t=[[equip_slot.tex]] local b=c:AddChild(IB([[images/hud.xml]],t,t,t)) b:SetPosition(('+X("swap")+'-w.x)/k,('+Y("swap")+'-w.y)/k) b:SetScale('+st.S+') b.image:SetTint(1,1,1,0.5)'
+  +' local ic=b:AddChild(Im([[images/hud.xml]],t)) ic:SetClickable(false)'
   +' b.inst:DoPeriodicTask(0.25,function() pcall(function() local x=pick() if x then local i=x.replica.inventoryitem ic:SetTexture(i:GetAtlas(),i:GetImage()) ic:Show() else ic:Hide() end end) end)'
   +' b:SetOnClick(function() local x=pick() if x then V:UseItemFromInvTile(x) end end) P._qb=b';
 }
 function genBox(){
-  return 'local IB,Tx,P=require("widgets/imagebutton"),require("widgets/text"),ThePlayer local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition()'
+  return 'local IB,Tx,P=require([[widgets/imagebutton]]),require([[widgets/text]]),ThePlayer local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition()'
   +' local S='+st.S+' for _,v in ipairs(P._mw or {}) do v:Kill() end P._mw={}'
   +' local function mk(l,m,px,py) local b=c:AddChild('+BTN+') b:SetPosition((px-w.x)/k,(py-w.y)/k) b:SetScale(S) b.image:SetTint(1,1,1,0.5) b:AddChild(Tx(NUMBERFONT,34,l)) b.m=m'
   +' b:SetOnClick(function() MW_MODE=(MW_MODE~=m) and m or false P._sn=false MW_Tint() end) table.insert(P._mw,b) end'
-  +' mk("BOX","bottom",'+X("box")+','+Y("box")+') mk("POT","top",'+X("pot")+','+Y("pot")+') P._mw[1].inst:DoPeriodicTask(0.5,function() pcall(MW_Watch) end)';
+  +' mk([[BOX]],[[bottom]],'+X("box")+','+Y("box")+') mk([[POT]],[[top]],'+X("pot")+','+Y("pot")+') P._mw[1].inst:DoPeriodicTask(0.5,function() pcall(MW_Watch) end)';
 }
 function genBadge1(){
   return 'local P=ThePlayer local c=P.HUD.controls if P._mb then P._mb:Kill() end local st=c.status local hr=st.heart'
-  +' local mb=require("widgets/badge")(nil,P,{.08,.68,.08,1},"status_health",nil,nil,true) st:AddChild(mb) P._mb=mb'
+  +' local mb=require([[widgets/badge]])(nil,P,{.08,.68,.08,1},[[status_health]],nil,nil,true) st:AddChild(mb) P._mb=mb'
   +' local p=hr:GetPosition() mb:SetPosition(p.x,p.y) local hw=hr:GetWorldPosition() local y0=mb:GetWorldPosition().y mb:SetPosition(p.x,p.y+100) local s=(mb:GetWorldPosition().y-y0)/100'
   +' local W,H=TheSim:GetScreenSize() mb:SetPosition(p.x+('+X("badge")+'-hw.x)/s,p.y+('+Y("badge")+'-hw.y)/s) mb:Hide()'
-  +' local F=rawget(_G,"MW_Fade") if F then F(mb) end';
+  +' local F=rawget(_G,[[MW_Fade]]) if F then F(mb) end';
 }
 function genBadge2(){
-  return 'local P=ThePlayer local mb=P._mb ChatHistory.MWH=ChatHistory.MWH or {} ChatHistory.MWH.mhp=function(t,msg) local a,b=msg:match("MHP:(%d+):(%d+)") if not a then return end a,b=tonumber(a),tonumber(b) mb:Show() mb:SetPercent(b>0 and a/b or 1,b) if mb.num then mb.num:SetString(tostring(a)) mb.num:Show() end return true end'
+  return 'local P=ThePlayer local mb=P._mb ChatHistory.MWH=ChatHistory.MWH or {} ChatHistory.MWH.mhp=function(t,msg) local a,b=msg:match([[MHP:(%d+):(%d+)]]) if not a then return end a,b=tonumber(a),tonumber(b) mb:Show() mb:SetPercent(b>0 and a/b or 1,b) if mb.num then mb.num:SetString(tostring(a)) mb.num:Show() end return true end'
   +' mb.OnUpdate=function() local r=P.replica.rider if not(r and r:IsRiding()) then mb:Hide() end end mb:StartUpdating()';
 }
 function genAutorun1(){
-  return 'local P=ThePlayer local O=rawget(_G,"MW_AR") if O and O.stop then O.stop() end local S=P.HUD.controls.virtualstick local A={on=false,hx=0,hy=0,pu=0} MW_AR=A function A.stop() A.on=false if S.touchID==nil then S.dirX,S.dirY,S.length=0,0,0 end if P._ar then P._ar.image:SetTint(1,1,1,.5) end end S.OrigOU=S.OrigOU or S.OnUpdate S.OnUpdate=function(s,dt) s.OrigOU(s,dt) if not A.on then return end local g=P.sg if g and g:HasStateTag("attack") then A.stop() return end if s.touchID~=nil then if s.length>0 then A.hx,A.hy=s.dirX,s.dirY end elseif GetTime()<A.pu or (g and g:HasStateTag("busy")) then s.dirX,s.dirY,s.length=0,0,0 else s.dirX,s.dirY,s.length=A.hx,A.hy,(A.hx~=0 or A.hy~=0) and 1 or 0 end end Networking_SystemMessage("ar1")';
+  return 'local P=ThePlayer local O=rawget(_G,[[MW_AR]]) if O and O.stop then O.stop() end local S=P.HUD.controls.virtualstick local A={on=false,hx=0,hy=0,pu=0} MW_AR=A function A.stop() A.on=false if S.touchID==nil then S.dirX,S.dirY,S.length=0,0,0 end if P._ar then P._ar.image:SetTint(1,1,1,.5) end end S.OrigOU=S.OrigOU or S.OnUpdate S.OnUpdate=function(s,dt) s.OrigOU(s,dt) if not A.on then return end local g=P.sg if g and g:HasStateTag([[attack]]) then A.stop() return end if s.touchID~=nil then if s.length>0 then A.hx,A.hy=s.dirX,s.dirY end elseif GetTime()<A.pu or (g and g:HasStateTag([[busy]])) then s.dirX,s.dirY,s.length=0,0,0 else s.dirX,s.dirY,s.length=A.hx,A.hy,(A.hx~=0 or A.hy~=0) and 1 or 0 end end Networking_SystemMessage([[ar1]])';
 }
 function genAutorun2(){
-  return 'local P=ThePlayer local A=MW_AR local pc=P.components.playercontroller if not(A and pc) then Networking_SystemMessage("ar2 fail") return end pc.OrigDA=pc.OrigDA or pc.DoAction pc.DoAction=function(s,a,...) if A.on and a and a.action then local i=a.action.id if i=="EAT" then A.pu=GetTime()+1.2 elseif i=="EQUIP" or i=="UNEQUIP" then A.pu=GetTime()+.3 elseif i~="LOOKAT" and i~="WALKTO" then A.stop() end end return pc.OrigDA(s,a,...) end Networking_SystemMessage("ar2")';
+  return 'local P=ThePlayer local A=MW_AR local pc=P.components.playercontroller if not(A and pc) then Networking_SystemMessage([[ar2 fail]]) return end pc.OrigDA=pc.OrigDA or pc.DoAction pc.DoAction=function(s,a,...) if A.on and a and a.action then local i=a.action.id if i==[[EAT]] then A.pu=GetTime()+1.2 elseif i==[[EQUIP]] or i==[[UNEQUIP]] then A.pu=GetTime()+.3 elseif i~=[[LOOKAT]] and i~=[[WALKTO]] then A.stop() end end return pc.OrigDA(s,a,...) end Networking_SystemMessage([[ar2]])';
 }
 function genAutorun3(){
-  return 'local P=ThePlayer local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition() if P._ar then P._ar:Kill() end local IB,Tx=require("widgets/imagebutton"),require("widgets/text") local b=c:AddChild(IB("images/hud.xml","equip_slot.tex","equip_slot.tex","equip_slot.tex")) b:SetPosition(('+X("autorun")+'-w.x)/k,('+Y("autorun")+'-w.y)/k) b:SetScale('+st.S+') b.image:SetTint(1,1,1,.5) b:AddChild(Tx(NUMBERFONT,44,"R")) b:SetOnClick(function() local A=MW_AR if not A then return end if A.on then A.stop() else A.on=true b.image:SetTint(1,1,1,1) end end) P._ar=b Networking_SystemMessage("ar3")';
+  return 'local P=ThePlayer local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition() if P._ar then P._ar:Kill() end local IB,Tx=require([[widgets/imagebutton]]),require([[widgets/text]]) local b=c:AddChild(IB([[images/hud.xml]],[[equip_slot.tex]],[[equip_slot.tex]],[[equip_slot.tex]])) b:SetPosition(('+X("autorun")+'-w.x)/k,('+Y("autorun")+'-w.y)/k) b:SetScale('+st.S+') b.image:SetTint(1,1,1,.5) b:AddChild(Tx(NUMBERFONT,44,[[R]])) b:SetOnClick(function() local A=MW_AR if not A then return end if A.on then A.stop() else A.on=true b.image:SetTint(1,1,1,1) end end) P._ar=b Networking_SystemMessage([[ar3]])';
 }
 var LIMIT=950;
 function scriptsFor(g){
@@ -599,17 +599,20 @@ function parseDynScript(text){
     if(!sx||!sy)continue;
     add(parseScreenExprX(m[1],W,H),parseScreenExprY(m[2],W,H),"?",base+sx.a,base+sx.b,base+sy.a,base+sy.b,m[1],m[2]);
   }
-  var re2=/R\s*\(\s*-?\d+\s*,\s*"([^"]*)"\s*,\s*([^,]+)\s*,\s*([^)]+)\)/g;
+  // Lua strings may be written as "text" or [[text]] (long brackets avoid smart-quote problems)
+  var re2=/R\s*\(\s*-?\d+\s*,\s*(?:"([^"]*)"|\[\[([^\]]*)\]\])\s*,\s*([^,]+)\s*,\s*([^)]+)\)/g;
   while((m=re2.exec(text))){
-    var f2=m[0],b2=m.index,sx2=spans(f2,m[2]),sy2=spans(f2,m[3],sx2?sx2.b:0);
+    var l2=m[1]!=null?m[1]:m[2];
+    var f2=m[0],b2=m.index,sx2=spans(f2,m[3]),sy2=spans(f2,m[4],sx2?sx2.b:0);
     if(!sx2||!sy2)continue;
-    add(parseScreenExprX(m[2],W,H),parseScreenExprY(m[3],W,H),m[1]||"?",b2+sx2.a,b2+sx2.b,b2+sy2.a,b2+sy2.b,m[2],m[3]);
+    add(parseScreenExprX(m[3],W,H),parseScreenExprY(m[4],W,H),l2||"?",b2+sx2.a,b2+sx2.b,b2+sy2.a,b2+sy2.b,m[3],m[4]);
   }
-  var re3=/mk\s*\(\s*"([^"]+)"\s*,\s*"[^"]+"\s*,\s*([^,]+)\s*,\s*([^)]+)\)/g;
+  var re3=/mk\s*\(\s*(?:"([^"]+)"|\[\[([^\]]+)\]\])\s*,\s*(?:"[^"]+"|\[\[[^\]]+\]\])\s*,\s*([^,]+)\s*,\s*([^)]+)\)/g;
   while((m=re3.exec(text))){
-    var f3=m[0],b3=m.index,sx3=spans(f3,m[2]),sy3=spans(f3,m[3],sx3?sx3.b:0);
+    var l3=m[1]!=null?m[1]:m[2];
+    var f3=m[0],b3=m.index,sx3=spans(f3,m[3]),sy3=spans(f3,m[4],sx3?sx3.b:0);
     if(!sx3||!sy3)continue;
-    add(parseScreenExprX(m[2],W,H),parseScreenExprY(m[3],W,H),m[1],b3+sx3.a,b3+sx3.b,b3+sy3.a,b3+sy3.b,m[2],m[3]);
+    add(parseScreenExprX(m[3],W,H),parseScreenExprY(m[4],W,H),l3,b3+sx3.a,b3+sx3.b,b3+sy3.a,b3+sy3.b,m[3],m[4]);
   }
   return marks;
 }
