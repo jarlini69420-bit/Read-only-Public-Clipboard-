@@ -41,7 +41,17 @@
   },
   {
     "id": "mwcsskai5bsw",
-    "text": "Added missing mode labels for (10). Updated results to be sent as user chat messages so the info shared to everyone.",
+    "text": "Added missing mode labels for (10). Updated results to be sent as user chat messages so the info is shared to everyone.",
     "ts": 1794442600890
+  },
+  {
+    "id": "mwdldelblqb3",
+    "text": "Added (23) Alignment toggle. Only visible in placement mode. Place paste (23.2) to placer to move the buttons. Layout is Lbutton label Rbutton",
+    "ts": 1794490602527
+  },
+  {
+    "id": "mwec0c61azvk",
+    "text": "Updated commands to use long brackets as suggested. There's no longer need to turn off autocorrect and punctuation. I tested the longest command and the macro runner and they still work so everything would probably work just fine.",
+    "ts": 1794535342489
   }
 ]
