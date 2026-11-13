@@ -227,22 +227,16 @@ button,input,select,textarea{font:inherit;color:inherit}
 "use strict";
 var KEY="dst_button_placer_v1";
 var GROUPS=[
-  {id:"rot",title:"Rotate buttons",items:["rotL","rotR"],mode:"Local",note:"Rebuilds the camera rotate buttons. Replaces the older rotate line when saved."},
-  {id:"swap",title:"Quick-swap button",items:["swap"],mode:"Local",note:"Equips your rightmost equippable. Paste it after the rotate buttons."},
-  {id:"autorun",title:"Autorun (R)",items:["autorun"],mode:"Local",note:"Three lines: paste 1 then 2 then 3. Place R above the gap between rotate buttons."},
-  {id:"box",title:"BOX and POT buttons",items:["box","pot"],mode:"Local",note:"Needs 7.1, 7.2, 7.3 and 7.4 pasted first or your game will crash"},
+  {id:"swap",title:"Quick-swap button",items:["swap"],mode:"Local",note:"Equips your rightmost equippable. Paste after rotate buttons if you use those."},
+  {id:"autorun",title:"Autorun (R)",items:["autorun"],mode:"Local",note:"Three lines: paste 1 then 2 then 3. Place R near the rotate area."},
   {id:"badge",title:"Beefalo health badge",items:["badge"],mode:"Local",note:"Needs 9.1 and 9.3 pasted first. Then paste the two beefalo lines"}
 ];
 var DEFAULTS={
-  rotL:{label:"Rotate left",glyph:"<",x:2128/2400,y:976/1080,kind:"btn",color:"#b5842a"},
-  rotR:{label:"Rotate right",glyph:">",x:2293/2400,y:976/1080,kind:"btn",color:"#b5842a"},
   swap:{label:"Quick swap",glyph:"S",x:2040/2400,y:790/1080,kind:"btn",color:"#2e86c1"},
   autorun:{label:"Autorun R",glyph:"R",x:2210/2400,y:880/1080,kind:"btn",color:"#e8a838"},
-  box:{label:"BOX",glyph:"BOX",x:290/2400,y:975/1080,kind:"btn",color:"#c0603a"},
-  pot:{label:"POT",glyph:"POT",x:171/2400,y:975/1080,kind:"btn",color:"#8e5ac0"},
   badge:{label:"Beefalo badge",glyph:"HP",x:2092/2400,y:226/1080,kind:"badge",color:"#2fa36b"}
 };
-var st={W:2400,H:1080,pos:{},S:1.25,tag:false,inc:{rot:true,swap:true,autorun:true,box:true,badge:true},sel:"rotL"};
+var st={W:2400,H:1080,pos:{},S:1.25,tag:false,inc:{swap:true,autorun:true,badge:true},sel:"swap"};
 var dyn={script:"",marks:[],sel:null};
 function resetPos(id){st.pos[id]={x:DEFAULTS[id].x,y:DEFAULTS[id].y};}
 Object.keys(DEFAULTS).forEach(resetPos);
@@ -678,6 +672,27 @@ function runDynParse(){
 /* ---------- start ---------- */
 function render(){renderGroups();renderScripts();syncFields();}
 shot.dataset.name="Blank screen";shot.src=blankImage();
+
+/* Accept script from clipboard page via #hash (or ?s=) */
+(function loadFromLink(){
+  var raw="";
+  try{
+    if(location.hash&&location.hash.length>1) raw=decodeURIComponent(location.hash.slice(1));
+    else if(location.search){
+      var q=new URLSearchParams(location.search);
+      raw=q.get("s")||q.get("script")||"";
+    }
+  }catch(e){raw="";}
+  if(!raw||!raw.trim())return;
+  var ta=$("dynin");
+  if(ta){
+    ta.value=raw;
+    // Clear hash so refresh doesn't re-trigger and address bar stays clean
+    try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}
+    // Parse after a tick so DOM/zoom/size are ready
+    setTimeout(function(){if(typeof runDynParse==="function")runDynParse();},50);
+  }
+})();
 })();
 </script>
 </body>

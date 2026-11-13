@@ -83,6 +83,31 @@ body {
 }
 .clip-card:hover { border-color: var(--border-strong); }
 
+.placer-badge {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--green);
+  background: rgba(74, 222, 128, 0.12);
+  border: 0.5px solid rgba(74, 222, 128, 0.35);
+  border-radius: 4px;
+  padding: 2px 6px;
+  line-height: 1.3;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-right: auto;
+  transition: background 0.15s, border-color 0.15s;
+}
+.placer-badge:hover {
+  background: rgba(74, 222, 128, 0.22);
+  border-color: rgba(74, 222, 128, 0.55);
+}
+.placer-badge i { font-size: 11px; margin-right: 3px; vertical-align: -1px; }
+
 .clip-label {
   font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
   color: var(--text-accent); text-transform: uppercase;
@@ -115,6 +140,7 @@ body {
 
 .actions {
   display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-height: 22px;
+  flex-wrap: nowrap;
 }
 .copied-ago {
   font-size: 11px;
@@ -405,15 +431,16 @@ function normalizeClips(data) {
   if (!Array.isArray(data)) return [];
   return data.map((item, i) => {
     if (typeof item === 'string') {
-      return { text: item, label: 'Clip ' + (LABELS[i] || (i + 1)) };
+      return { text: item, label: 'Clip ' + (LABELS[i] || (i + 1)), placer: false };
     }
     if (item && typeof item === 'object') {
       return {
         text: item.text || '',
-        label: item.label || ('Clip ' + (LABELS[i] || (i + 1)))
+        label: item.label || ('Clip ' + (LABELS[i] || (i + 1))),
+        placer: !!item.placer
       };
     }
-    return { text: '', label: 'Clip ' + (LABELS[i] || (i + 1)) };
+    return { text: '', label: 'Clip ' + (LABELS[i] || (i + 1)), placer: false };
   });
 }
 
@@ -519,6 +546,58 @@ document.getElementById('refresh-btn').addEventListener('click', () => {
   loadNotifs();
 });
 
+/**
+ * Detect scripts the DST button placer can reposition.
+ * Mirrors parseDynScript in dst-button-placer.html:
+ *   - SetPosition((expr-w.x)/k, (expr-w.y)/k) where expr uses W/H
+ *   - R(d, "label"|[[label]], exprX, exprY) with W/H math
+ *   - mk(..., exprX, exprY) with W/H math
+ * Also honors an explicit JSON "placer": true flag (checked in render).
+ */
+function isPlacerCompatible(text) {
+  if (!text || typeof text !== 'string') return false;
+
+  // SetPosition((X-w.x)/k,(Y-w.y)/k) — X/Y may contain W, H, numbers, * / -
+  const hasSetPos =
+    /SetPosition\s*\(\s*\(\s*[^)]*[WH0-9.][^)]*\s*-\s*w\.x\s*\)\s*\/\s*k\s*,\s*\(\s*[^)]*[WH0-9.][^)]*\s*-\s*w\.y\s*\)\s*\/\s*k\s*\)/i.test(text) ||
+    /SetPosition\s*\(\s*\([^)]*w\.x[^)]*\)\s*\/\s*k\s*,\s*\([^)]*w\.y[^)]*\)\s*\/\s*k\s*\)/i.test(text);
+
+  // R(d, "lab"|[[lab]], X, Y) with screen math in the coordinate args
+  const hasR =
+    /\bR\s*\(\s*-?\d+\s*,\s*(?:"[^"]*"|\[\[[^\]]*\]\])\s*,\s*[^)]*[WH][^)]*\)/i.test(text);
+
+  // mk(label, mode, X, Y) with W/H in coords (BOX/POT style)
+  const hasMk =
+    /\bmk\s*\(\s*(?:"[^"]*"|\[\[[^\]]*\]\])\s*,\s*(?:"[^"]*"|\[\[[^\]]*\]\])\s*,\s*[^)]*[WH][^)]*\)/i.test(text);
+
+  // Must have at least one placeable coordinate pattern
+  if (!(hasSetPos || hasR || hasMk)) return false;
+
+  // Prefer scripts that actually use screen W/H math (avoids pure world-grid / farm scripts)
+  const hasScreenMath = /[WH]\s*[-+*/]|\b[WH]\s*\)|[0-9.]+\s*\*\s*[WH]|[WH]\s*\*\s*[0-9.]/.test(text);
+  if (!hasScreenMath && !hasR && !hasMk) return false;
+
+  return true;
+}
+
+/** Strip leading/trailing --M before passing to placer */
+function cleanScriptForPlacer(text) {
+  if (!text) return '';
+  return text
+    .replace(/^\s*--M\s*/i, '')
+    .replace(/\s*--M\s*$/i, '')
+    .replace(/\s*--M\s+/gi, ' ')
+    .trim();
+}
+
+function openPlacer(scriptText) {
+  const cleaned = cleanScriptForPlacer(scriptText);
+  // Hash keeps the long script out of the query string
+  const url = new URL('dst-button-placer.html', window.location.href);
+  url.hash = encodeURIComponent(cleaned);
+  window.open(url.toString(), '_blank', 'noopener');
+}
+
 function render() {
   const board = document.getElementById('board');
   board.innerHTML = '';
@@ -545,6 +624,9 @@ function render() {
     const card = document.createElement('div');
     card.className = 'clip-card';
 
+    const placerOk = clip.placer || isPlacerCompatible(clip.text);
+    if (placerOk) card.classList.add('has-placer');
+
     const labelEl = document.createElement('div');
     labelEl.className = 'clip-label';
     labelEl.textContent = clip.label;
@@ -559,6 +641,18 @@ function render() {
 
     const actions = document.createElement('div');
     actions.className = 'actions';
+
+    if (placerOk) {
+      const badge = document.createElement('div');
+      badge.className = 'placer-badge';
+      badge.title = 'Open in button placer';
+      badge.innerHTML = '<i class="ti ti-crosshair"></i> tap to move button in dst btn placer';
+      badge.addEventListener('click', e => {
+        e.stopPropagation();
+        openPlacer(clip.text);
+      });
+      actions.appendChild(badge);
+    }
 
     if (clip.text) {
       const lastMap = getLastCopiedMap();
@@ -583,6 +677,7 @@ function render() {
     }
 
     card.append(labelEl, textContainer, actions);
+
     card.addEventListener('click', () => {
       if (clip.text) executeCopy(clip.text, clip.label);
     });

@@ -53,5 +53,10 @@
     "id": "mwec0c61azvk",
     "text": "Updated commands to use long brackets as suggested. There's no longer need to turn off autocorrect and punctuation. I tested the longest command and the macro runner and they still work so everything would probably work just fine.",
     "ts": 1794535342489
+  },
+  {
+    "id": "mweqgj4top2s",
+    "text": "Quick link to move buttons in placer. It pastes the command automatically to the placer page! Removed outdated commands in placer.",
+    "ts": 1794559612637
   }
 ]
