@@ -58,5 +58,10 @@
     "id": "mweqgj4top2s",
     "text": "Quick link to move buttons in placer. It pastes the command automatically to the placer page! Removed outdated commands in placer.",
     "ts": 1794559612637
+  },
+  {
+    "id": "mwf0jnx6mi5e",
+    "text": "Added (24) Stack and group up same items triggered on item drop. For the floor hoarders! Skips lightbugs and anything alive to prevent happy little accidents",
+    "ts": 1794576554970
   }
 ]
