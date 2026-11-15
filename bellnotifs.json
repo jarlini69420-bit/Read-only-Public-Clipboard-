@@ -5,11 +5,6 @@
     "ts": 1794015325523
   },
   {
-    "id": "mw7tylty2rz9",
-    "text": "Added (20) minimap, go to https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/dst-button-placer  first, upload an uncropped screenshot then paste (20.1) in the Paste any script  box then tap find coordinates. The button that is generated is the center of the minimap. Copy the updated script then run it in your console. Repeat until you like where it sits!",
-    "ts": 1794142231558
-  },
-  {
     "id": "mw9ue249ool9",
     "text": "Added MISC Prevent other characters from picking up Winona's Winbot",
     "ts": 1794263884857
@@ -63,5 +58,15 @@
     "id": "mwf0jnx6mi5e",
     "text": "Added (24) Stack and group up same items triggered on item drop. For the floor hoarders! Skips lightbugs and anything alive to prevent happy little accidents",
     "ts": 1794576554970
+  },
+  {
+    "id": "mwh0a7vj04ds",
+    "text": "Added (20.1.2) a *circle* minimap.",
+    "ts": 1794697046623
+  },
+  {
+    "id": "mwh0fbdsv3s5",
+    "text": "Fixed (24) Grouper from grouping items with collision hehe",
+    "ts": 1794697284449
   }
 ]
