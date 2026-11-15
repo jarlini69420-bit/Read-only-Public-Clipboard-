@@ -15,11 +15,6 @@
     "ts": 1794263914255
   },
   {
-    "id": "mwanb4z0ou7m",
-    "text": "Updated minimap (20.2) to prevent possible movement or pinch zoom issues. Changed (20.4) to an optional toggle to hide and show the minimap! Tap the brain icon to hide/show",
-    "ts": 1794312457452
-  },
-  {
     "id": "mwbjx50k8dt5",
     "text": "Added (21) Auto-hitches/unhitches beefalo at grooming stations and alerts you with a bell if you mount without one. Dismount beefalo near a grooming station, to mount, just tap on the hitched beefalo! Character will walk to the beefalo, unhitch, feed then mount in one go! DEPENDENCY: AUTORUN (12)",
     "ts": 1794367231652
@@ -40,11 +35,6 @@
     "ts": 1794442600890
   },
   {
-    "id": "mwdldelblqb3",
-    "text": "Added (23) Alignment toggle. Only visible in placement mode. Place paste (23.2) to placer to move the buttons. Layout is Lbutton label Rbutton",
-    "ts": 1794490602527
-  },
-  {
     "id": "mwec0c61azvk",
     "text": "Updated commands to use long brackets as suggested. There's no longer need to turn off autocorrect and punctuation. I tested the longest command and the macro runner and they still work so everything would probably work just fine.",
     "ts": 1794535342489
@@ -60,13 +50,13 @@
     "ts": 1794576554970
   },
   {
-    "id": "mwh0a7vj04ds",
-    "text": "Added (20.1.2) a *circle* minimap.",
-    "ts": 1794697046623
-  },
-  {
     "id": "mwh0fbdsv3s5",
     "text": "Fixed (24) Grouper from grouping items with collision hehe",
     "ts": 1794697284449
+  },
+  {
+    "id": "mwhld53wu0hk",
+    "text": "Added a (MISC) manual save command. In case anyone else is having a bug with disconnect button freezing(which leads to the game failing to save a day's worth of progress). Otherwise, don't bother using. DO NOT close the game before you see the save announcer.",
+    "ts": 1794732454940
   }
 ]
