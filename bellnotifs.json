@@ -58,5 +58,10 @@
     "id": "mwhld53wu0hk",
     "text": "Added a (MISC) manual save command. In case anyone else is having a bug with disconnect button freezing(which leads to the game failing to save a day's worth of progress). Otherwise, don't bother using. DO NOT close the game before you see the save announcer.",
     "ts": 1794732454940
+  },
+  {
+    "id": "mwhqef9c7a4q",
+    "text": "Added (25) Prevent accidental attacks on your beefalo IF the bell it's bonded to is in your inventory or your backpack whatever body item storage. I hit my beef(again), so now this finally exists.",
+    "ts": 1794740912833
   }
 ]
