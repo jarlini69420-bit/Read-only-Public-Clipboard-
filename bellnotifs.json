@@ -63,5 +63,15 @@
     "id": "mwhqef9c7a4q",
     "text": "Added (25) Prevent accidental attacks on your beefalo IF the bell it's bonded to is in your inventory or your backpack whatever body item storage. I hit my beef(again), so now this finally exists.",
     "ts": 1794740912833
+  },
+  {
+    "id": "mwhzvqr505hc",
+    "text": "Added (26) Why Chatscreen no scroll bar? why does it close after keyboard close in iOS? Probably adds a scrollbar and close button in chat. Probably not gonna lock you in chatscreen and force you to restart :)",
+    "ts": 1794756837425
+  },
+  {
+    "id": "mwiydcu7xlkz",
+    "text": "Added (MISC) One tap Console screen open. trying to also make it auto pull up keyboard automatically too if possible",
+    "ts": 1794814766143
   }
 ]
