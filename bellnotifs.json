@@ -65,13 +65,38 @@
     "ts": 1794740912833
   },
   {
-    "id": "mwhzvqr505hc",
-    "text": "Added (26) Why Chatscreen no scroll bar? why does it close after keyboard close in iOS? Probably adds a scrollbar and close button in chat. Probably not gonna lock you in chatscreen and force you to restart :)",
-    "ts": 1794756837425
-  },
-  {
     "id": "mwiydcu7xlkz",
     "text": "Added (MISC) One tap Console screen open. trying to also make it auto pull up keyboard automatically too if possible",
     "ts": 1794814766143
+  },
+  {
+    "id": "mwjafk9qcrk7",
+    "text": "Added (8.7) Macro Cleaner to attempt to clean up the macro with old duplicates or older commands with the old positions. Still experimental",
+    "ts": 1794835024478
+  },
+  {
+    "id": "mwk7bh51z3y9",
+    "text": "Fixed (8.6) Forgotten labels and changed number range in cmd to placeholder",
+    "ts": 1794890261126
+  },
+  {
+    "id": "mwk7w29oi82f",
+    "text": "Added (27) Added Fig tree block growth range for easy spacing to plant several fig trees tightly packed",
+    "ts": 1794891221628
+  },
+  {
+    "id": "mwlat1d8swyu",
+    "text": "Warning (26) still broken. Will fix later probably. I mean the close button works if you placed it properly hehe",
+    "ts": 1794956585516
+  },
+  {
+    "id": "mwlavdmv7f5j",
+    "text": "Added (27) Remove Insanity Visuals, Most of them anyway, the ground and brightness visuals is still there, idk if we can reach them with lua. This also removes most if not all nightvision tints while low/no sanity",
+    "ts": 1794956694727
+  },
+  {
+    "id": "mwlaxezo7zuz",
+    "text": "Added (28) Remove Moggles Nightvision and day tint",
+    "ts": 1794956789796
   }
 ]
