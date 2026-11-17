@@ -325,11 +325,11 @@
   },
   {
     "text": "local P=ThePlayer local C=P.HUD.controls local B=C.bs local SW,SH=TheSim:GetScreenSize() B.on=false B.t=0 B.OnUpdate=function(s,dt) local D=B.D if not B.on then for i=1,#D do D[i]:Hide() end return end B.t=B.t-dt if B.t<=0 then B.t=.5 if B.F then B.F() end end local wp=C:GetWorldPosition() local sc=C:GetScale().x local Q=B.Q or{} for i=1,#D do D[i]:Hide() end for i=1,#Q do local q,d=Q[i],D[i] if not d then break end local a,u=TheSim:GetScreenPos(q[1],0,q[2]) if a and u and a>-40 and u>-40 and a<SW+40 and u<SH+40 then d:SetPosition((a-wp.x)/sc,(u-wp.y)/sc) d:SetTint(1,.3,.6,.8) d:Show() end end end --M",
-    "label": "27.3 (local) Fig tree plant spacing helper (3/4)"
+    "label": "27.3 (local) Fig tree plant spacing helper (3/4) toggled Off by default"
   },
   {
     "text": "local P=ThePlayer local B=P.HUD.controls.bs if not B then return end local S=require[[screens/chatinputscreen]] local IB=require[[widgets/imagebutton]] S.MWB=S.MWB or S._ctor S._ctor=function(s,...) S.MWB(s,...) local r=s.root or s local W,H=TheSim:GetScreenSize() local k=r:GetScale().x local w=r:GetWorldPosition() if s.MW_bb then s.MW_bb:Kill() end local b=r:AddChild(IB([[images/hud.xml]],[[equip_slot.tex]],[[equip_slot.tex]],[[equip_slot.tex]])) s.MW_bb=b b:SetScale(.9) b.image:SetTint(1,1,1,.35) b:SetPosition((0.3657*H-w.x)/k,(0.2722*H-w.y)/k) b:SetOnClick(function() B.on=not B.on if B.on then if not B.updating then B:StartUpdating() end B.t=0 if B.F then B.F() end b.image:SetTint(.4,1,.5,.8) Networking_SystemMessage([[bs on]]) else B.Q={} for i=1,#B.D do B.D[i]:Hide() end b.image:SetTint(1,1,1,.35) Networking_SystemMessage([[bs off]]) end end) end --M",
-    "label": "27.4 (local) Fig tree plant spacing helper (4/4)"
+    "label": "27.4 (local) Fig tree plant spacing helper (4/4) tap the button in chatscreen to toggle it on or off"
   },
   {
     "text": "local H=ThePlayer.HUD for _,n in ipairs{\"insanityoverlay\",\"insanity_overlay\",\"vig\",\"mindover\"} do local w=H[n] or (H.controls and H.controls[n]) if w then w.Show=function() end w:Hide() end end --M",
