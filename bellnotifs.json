@@ -91,12 +91,17 @@
   },
   {
     "id": "mwlavdmv7f5j",
-    "text": "Added (27) Remove Insanity Visuals, Most of them anyway, the ground and brightness visuals is still there, idk if we can reach them with lua. This also removes most if not all nightvision tints while low/no sanity",
+    "text": "Added (28) Remove Insanity Visuals, Most of them anyway, the ground and brightness visuals is still there, idk if we can reach them with lua. This also removes most if not all nightvision tints while low/no sanity",
     "ts": 1794956694727
   },
   {
     "id": "mwlaxezo7zuz",
-    "text": "Added (28) Remove Moggles Nightvision and day tint",
+    "text": "Added (29) Remove Moggles Nightvision and day tint",
     "ts": 1794956789796
+  },
+  {
+    "id": "mwllr9ogtik8",
+    "text": "Added (30) (31) Wanda Ageless&Backstep Watch quick use button, finds a ready watch then uses it. Button only shows up when there's an off cooldown watch",
+    "ts": 1794974978754
   }
 ]
