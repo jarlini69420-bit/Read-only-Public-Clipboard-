@@ -85,11 +85,6 @@
     "ts": 1794891221628
   },
   {
-    "id": "mwlat1d8swyu",
-    "text": "Warning (26) still broken. Will fix later probably. I mean the close button works if you placed it properly hehe",
-    "ts": 1794956585516
-  },
-  {
     "id": "mwlavdmv7f5j",
     "text": "Added (28) Remove Insanity Visuals, Most of them anyway, the ground and brightness visuals is still there, idk if we can reach them with lua. This also removes most if not all nightvision tints while low/no sanity",
     "ts": 1794956694727
@@ -103,5 +98,15 @@
     "id": "mwllr9ogtik8",
     "text": "Added (30) (31) Wanda Ageless&Backstep Watch quick use button, finds a ready watch then uses it. Button only shows up when there's an off cooldown watch",
     "ts": 1794974978754
+  },
+  {
+    "id": "mwmkeof77eqh",
+    "text": "Fixed (26) Chatscreen Scrollbar | Will also let iOS stay on the chat screen after keyboard close",
+    "ts": 1795033177895
+  },
+  {
+    "id": "mwmour27jyfs",
+    "text": "Added (32) Play gramophone indefinitely to keep nearby plants happy.",
+    "ts": 1795040646271
   }
 ]
