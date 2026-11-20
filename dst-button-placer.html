@@ -83,6 +83,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .opts .chk{justify-content:flex-start}
 .hint{color:var(--ink2);font-size:.88rem;text-align:center}
 .info-note{font-size:.85rem;color:var(--ink2);display:flex;align-items:center;gap:6px}
+.info-note[hidden]{display:none}
 .info-note .icon{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--line);color:var(--ink);font-size:.75rem;font-weight:bold}
 .out{margin-top:34px;width:100%;max-width:100%}
 .out>h2{font-size:1.4rem;margin-bottom:4px}
@@ -183,7 +184,7 @@ button,input,select,textarea{font:inherit;color:inherit}
         <!-- e) --M tag checkbox & f) Info note -->
         <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:4px;">
           <label class="chk" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;">
-            <input type="checkbox" id="tag"> Add the --M tag to each script
+            <input type="checkbox" id="tag" autocomplete="off"> Add the --M tag to each script
           </label>
           <p class="info-note">
             <span class="icon">i</span>
@@ -200,6 +201,7 @@ button,input,select,textarea{font:inherit;color:inherit}
             <button class="btn small" type="button" id="dynclear">Clear ? markers</button>
             <button class="btn small" type="button" id="dyncopy">Copy updated script</button>
           </div>
+          <p class="info-note" id="dynnote" hidden><span class="icon">i</span><span>Character-specific command? Tap the end of the box and type <b>:name</b> right after --M (e.g. --M:wanda, or --M:willow,winona).</span></p>
           <p class="hint" id="dynstatus" style="text-align:left">No dynamic markers yet.</p>
           <textarea id="dynout" spellcheck="false" hidden style="width:100%;min-height:90px;padding:10px;border:1.5px solid var(--line);background:var(--code-bg);border-radius:3px;font:12px/1.4 var(--mono);resize:vertical;color:var(--ink)"></textarea>
         </div>
@@ -237,15 +239,15 @@ var DEFAULTS={
   badge:{label:"Beefalo badge",glyph:"HP",x:2092/2400,y:226/1080,kind:"badge",color:"#2fa36b"}
 };
 var st={W:2400,H:1080,pos:{},S:1.25,tag:false,inc:{swap:true,autorun:true,badge:true},sel:"swap"};
-var dyn={script:"",marks:[],sel:null};
+var dyn={script:"",marks:[],sel:null,had:false,sfx:""};
 function resetPos(id){st.pos[id]={x:DEFAULTS[id].x,y:DEFAULTS[id].y};}
 Object.keys(DEFAULTS).forEach(resetPos);
 
 /* ---------- storage (fractions of the screenshot, so positions survive a new screenshot) ---------- */
-function save(){try{localStorage.setItem(KEY,JSON.stringify({pos:st.pos,S:st.S,tag:st.tag,inc:st.inc,sel:st.sel}));}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({pos:st.pos,S:st.S,inc:st.inc,sel:st.sel}));}catch(e){}}
 function load(){try{var r=localStorage.getItem(KEY);if(!r)return;var d=JSON.parse(r);
   if(d.pos)Object.keys(DEFAULTS).forEach(function(k){if(d.pos[k]&&isFinite(d.pos[k].x)&&isFinite(d.pos[k].y))st.pos[k]=d.pos[k];});
-  if(isFinite(d.S))st.S=d.S; if(typeof d.tag==="boolean")st.tag=d.tag; if(d.inc)Object.keys(st.inc).forEach(function(k){if(typeof d.inc[k]==="boolean")st.inc[k]=d.inc[k];});
+  if(isFinite(d.S))st.S=d.S; if(d.inc)Object.keys(st.inc).forEach(function(k){if(typeof d.inc[k]==="boolean")st.inc[k]=d.inc[k];});
   if(d.sel&&DEFAULTS[d.sel])st.sel=d.sel;}catch(e){}}
 load();
 
@@ -406,7 +408,7 @@ $("fy").addEventListener("input",function(e){
   var p=px(st.sel);setPx(st.sel,p.x,+e.target.value);save();draw();renderGroups();renderScripts();
 });
 $("scale").addEventListener("input",function(e){var v=+e.target.value;if(v>=0.5&&v<=3){st.S=v;save();draw();renderScripts();}});
-$("tag").addEventListener("change",function(e){st.tag=e.target.checked;save();renderScripts();});
+$("tag").addEventListener("change",function(e){st.tag=e.target.checked;renderScripts();showDyn();syncNote();});
 (function(){
   var holdT=null,holdI=null;
   function stopHold(){if(holdT){clearTimeout(holdT);holdT=null;}if(holdI){clearInterval(holdI);holdI=null;}}
@@ -610,6 +612,10 @@ function parseDynScript(text){
   }
   return marks;
 }
+function splitTag(t){var m=/\s*--M(:[A-Za-z0-9_,]*)?[ \t]*$/.exec(t);return m?{body:t.slice(0,m.index),had:true,sfx:m[1]||""}:{body:t,had:false,sfx:""};}
+function dynFull(){var s=dyn.script||"";if(!s)return "";return (st.tag||dyn.had)?s+" --M"+(dyn.sfx||""):s;}
+function showDyn(){var o=$("dynout");if(!o||!dyn.script||!dyn.marks.length)return;o.hidden=false;o.value=dynFull();}
+function syncNote(){var n=$("dynnote");if(n)n.hidden=!st.tag;}
 function rebuildDynScript(){
   if(!dyn.script||!dyn.marks.length)return;
   var s=dyn.script,ops=[];
@@ -628,18 +634,18 @@ function rebuildDynScript(){
     dyn.marks[i].y0=fresh[i].y0;dyn.marks[i].y1=fresh[i].y1;
     dyn.marks[i].style=fresh[i].style;
   }
-  var out=$("dynout");if(out){out.hidden=false;out.value=s;}
+  showDyn();
   var stEl=$("dynstatus");if(stEl)stEl.textContent=dyn.marks.length+" marker(s) — drag to move, then Copy updated script.";
 }
 function runDynParse(){
   var text=($("dynin")&&$("dynin").value)||"";
   if(!text.trim()){$("dynstatus").textContent="Paste a script first.";return;}
-  dyn.script=text;dyn.marks=parseDynScript(text);dyn.sel=dyn.marks.length?0:null;
+  var sp=splitTag(text);dyn.script=sp.body;dyn.had=sp.had;dyn.sfx=sp.sfx;dyn.marks=parseDynScript(sp.body);dyn.sel=dyn.marks.length?0:null;
   if(!dyn.marks.length){
     $("dynstatus").textContent="No screen coordinates found. Need SetPosition((X-w.x)/k,(Y-w.y)/k) or R(...,X,Y) with W/H math.";
     $("dynout").hidden=true;draw();return;
   }
-  $("dynout").hidden=false;$("dynout").value=text;
+  showDyn();
   var bits=dyn.marks.map(function(m,i){return (m.label||("?"+(i+1)))+" @ "+m.x+","+m.y;});
   $("dynstatus").textContent="Found "+dyn.marks.length+": "+bits.join(" · ")+" — drag orange markers, then Copy.";
   draw();syncFields();
@@ -647,10 +653,12 @@ function runDynParse(){
 (function(){
   var bp=$("dynparse"),bc=$("dynclear"),bo=$("dyncopy");
   if(bp)bp.addEventListener("click",runDynParse);
-  if(bc)bc.addEventListener("click",function(){dyn.marks=[];dyn.sel=null;dyn.script="";if($("dynout")){$("dynout").value="";$("dynout").hidden=true;}if($("dynstatus"))$("dynstatus").textContent="No dynamic markers yet.";draw();});
+  if(bc)bc.addEventListener("click",function(){dyn.marks=[];dyn.sel=null;dyn.script="";dyn.had=false;dyn.sfx="";if($("dynout")){$("dynout").value="";$("dynout").hidden=true;}if($("dynstatus"))$("dynstatus").textContent="No dynamic markers yet.";draw();});
+  var od=$("dynout");
+  if(od)od.addEventListener("input",function(){var m=/--M(:[A-Za-z0-9_,]*)?[ \t]*$/.exec(od.value);if(m)dyn.sfx=m[1]||"";});
   if(bo)bo.addEventListener("click",function(){
     rebuildDynScript();
-    var t=(dyn.script||($("dynout")&&$("dynout").value)||"");
+    var t=dynFull();
     if(!t){alert("Nothing to copy");return;}
     copyText(t,bo);
   });
@@ -671,6 +679,7 @@ function runDynParse(){
 
 /* ---------- start ---------- */
 function render(){renderGroups();renderScripts();syncFields();}
+$("tag").checked=false;syncNote();
 shot.dataset.name="Blank screen";shot.src=blankImage();
 
 /* Accept script from clipboard page via #hash (or ?s=) */

@@ -113,5 +113,40 @@
     "id": "mwn6lk5gct95",
     "text": "Added (33) Telepoof quick button and manual aim to telepoo(f). Now you dont need to equip the lazy explorer and be limited by the sad mobile exclusive range. Reticle always starts at the character, you can cancel by moving your finger back to the button",
     "ts": 1795070450500
+  },
+  {
+    "id": "mwnzj8u0k0tl",
+    "text": "Updated (13.1) Character specific cmds to have custom tags for the new macro runner. Updated placer so checkbox affects the dynamic placer box. Added a note for character cmds for the filter. Total affected cmds are just 3, spellbook cmd will collide with Wanda's commands(breaking the spellbook) unless you delete them and readd using the new (8.3)",
+    "ts": 1795119051384
+  },
+  {
+    "id": "mwnzk55gxb1k",
+    "text": "Added (8.7) Recover from the most recent 8.6 deletion\nFixed (8.6) Placeholder to a truly magnificent number. Both have been tested",
+    "ts": 1795119093268
+  },
+  {
+    "id": "mwnzl7yope84",
+    "text": "Updated (8.2) runner to check character and filter the character specific commands",
+    "ts": 1795119143568
+  },
+  {
+    "id": "mwnzqzwz2sis",
+    "text": "Updated (8.3) savers to align with the new character filters and guards to read fails just incase",
+    "ts": 1795119413075
+  },
+  {
+    "id": "mwo3ukuvj5ag",
+    "text": "Updated clipboard to have character counts to make it easier to identify which specific command you have in the list made by (8.5)",
+    "ts": 1795126298647
+  },
+  {
+    "id": "mwo4fd7jjbbo",
+    "text": "Updated (8.1) Use only once, to create the persistent string(macro) as this has no guards against read fails. Disregard if you already have a macro (ran 8.1/8.3s before)",
+    "ts": 1795127268511
+  },
+  {
+    "id": "mwomyonahq4j",
+    "text": "Reordered some commands. Because I mistakenly added new commands at the bottom.",
+    "ts": 1795158402886
   }
 ]
