@@ -31,9 +31,9 @@ You may also want to turn off smart/auto punctuation yo avoid iOS messing up Lua
 4. Switch the mode from local to remote if the card label says local.
 5. Paste the command, and run it.
 6. Change the comment tags when needed:
-**--M tagged to save and run
-   **:charactername,charactername2** Filter for macro runner to skip Character specific commands to avoid unexpected errors. Note that Maxwell in game code is waxwell
-**--RUN** tagged to only run once
+- **--M** tagged to save and run
+- **:charactername,charactername2** Filter for macro runner to skip Character specific commands to avoid unexpected errors. Note that Maxwell in game code is waxwell
+- **--RUN** tagged to only run once
 
 
 > **Note:** Client-side UI, camera, and audio commands run locally, while world or entity changes generally require host or admin permissions.
