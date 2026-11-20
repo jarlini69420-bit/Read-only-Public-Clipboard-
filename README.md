@@ -2,8 +2,8 @@
 
 A lightweight, mobile-friendly web clipboard and companion toolset for **Don't Starve Together (DST) Mobile** Lua console commands—built to make copying, positioning, and pasting macros on mobile quick, ergonomic, and syntax-safe.
 
-* **Clipboard & Command Cards:** [https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/](https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/)
-* **Button Placer (Experimental):** [https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/dst-button-placer](https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/dst-button-placer)
+* **Clipboard & Command Cards:** [Commands Clipboard](https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/)
+* **Button Placer (Experimental):** [Button Placer](https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/dst-button-placer)
 * **YouTube Channel:** [@starvedSteve](https://www.youtube.com/@starvedSteve)
 
 ---
@@ -15,7 +15,7 @@ A lightweight, mobile-friendly web clipboard and companion toolset for **Don't S
 - **Filter Box** Find commands you want to use quickly 
 
 ---
-##For iOS
+## For iOS
 **Turn off the immensely annoying Allow Paste Message**
 1. Open the Settings app on your iPhone or iPad.
 2. Scroll down to the bottom and tap Apps (or scroll directly to the app list on older iOS versions).
@@ -27,8 +27,14 @@ You may also want to turn off smart/auto punctuation yo avoid iOS messing up Lua
 ## How to Use
 1. Open the [Clipboard Page](https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/) in your mobile browser and tap **Copy** on the command card you want.
 2. Use the [Button Placer](https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/dst-button-placer) to set up custom screen button placement before copying.
-3. Open the in-game console in **Don't Starve Together** on mobile, paste the command, and run it.
-4. **[Add/Adjust Any Specific Step]:** _e.g., whether a macro needs a one-time setup vs. re-running on load/shard change._
+3. Open the in-game console in **Don't Starve Together** on mobile by double tapping the day clock
+4. Switch the mode from local to remote if the card label says local.
+5. Paste the command, and run it.
+6. Change the comment tags when needed:
+**--M tagged to save and run
+   **:charactername,charactername2** Filter for macro runner to skip Character specific commands to avoid unexpected errors. Note that Maxwell in game code is waxwell
+**--RUN** tagged to only run once
+
 
 > **Note:** Client-side UI, camera, and audio commands run locally, while world or entity changes generally require host or admin permissions.
 
