@@ -22,7 +22,7 @@ A lightweight, mobile-friendly web clipboard and companion toolset for **Don't S
 3. Find and tap the specific app (e.g., Don't Starve Together, Safari, Chrome).
 4. Tap Paste from Other Apps.
 5. Select Allow (instead of Ask).
-You may also want to turn off smart/auto punctuation yo avoid iOS messing up Lua comments (--)
+You may also want to turn off smart/auto punctuation to avoid iOS messing up Lua comments (--)
 
 ## How to Use
 1. Open the [Clipboard Page](https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/) in your mobile browser and tap **Copy** on the command card you want.
