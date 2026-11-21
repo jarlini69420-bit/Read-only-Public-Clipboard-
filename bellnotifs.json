@@ -5,36 +5,6 @@
     "ts": 1794015325523
   },
   {
-    "id": "mw9ue249ool9",
-    "text": "Added MISC Prevent other characters from picking up Winona's Winbot",
-    "ts": 1794263884857
-  },
-  {
-    "id": "mw9ueosuzgjy",
-    "text": "Added Testserver Free crafting and Godmode",
-    "ts": 1794263914255
-  },
-  {
-    "id": "mwbjx50k8dt5",
-    "text": "Added (21) Auto-hitches/unhitches beefalo at grooming stations and alerts you with a bell if you mount without one. Dismount beefalo near a grooming station, to mount, just tap on the hitched beefalo! Character will walk to the beefalo, unhitch, feed then mount in one go! DEPENDENCY: AUTORUN (12)",
-    "ts": 1794367231652
-  },
-  {
-    "id": "mwbqf2449dvi",
-    "text": "Fixed (21) Autohitch a crash caused by a tap handler on beefalo surviving character swaps",
-    "ts": 1794378145396
-  },
-  {
-    "id": "mwc2qz3fa4ug",
-    "text": "Added (22) Brightshade Spawn Block rangefinder",
-    "ts": 1794398856748
-  },
-  {
-    "id": "mwcsskai5bsw",
-    "text": "Added missing mode labels for (10). Updated results to be sent as user chat messages so the info is shared to everyone.",
-    "ts": 1794442600890
-  },
-  {
     "id": "mwec0c61azvk",
     "text": "Updated commands to use long brackets as suggested. There's no longer need to turn off autocorrect and punctuation. I tested the longest command and the macro runner and they still work so everything would probably work just fine.",
     "ts": 1794535342489
@@ -116,7 +86,7 @@
   },
   {
     "id": "mwnzj8u0k0tl",
-    "text": "Updated (13.1) Character specific cmds to have custom tags for the new macro runner. Updated placer so checkbox affects the dynamic placer box. Added a note for character cmds for the filter. Total affected cmds are just 3, spellbook cmd will collide with Wanda's commands(breaking the spellbook) unless you delete them and readd using the new (8.3)",
+    "text": "Updated (13.1) Character specific cmds to have custom tags for the new macro runner. Updated placer so checkbox affects the dynamic placer box. Added a note for character cmds for the filter. Total affected cmds are just 3, spellbook cmd will collide with Wanda's commands(breaking the spellbook) unless you delete(8.6) them and readd using the new (8.3)",
     "ts": 1795119051384
   },
   {
@@ -148,5 +118,20 @@
     "id": "mwomyonahq4j",
     "text": "Reordered some commands. Because I mistakenly added new commands at the bottom.",
     "ts": 1795158402886
+  },
+  {
+    "id": "mwopo9plifky",
+    "text": "Added (34) Abby accidental attack prevention",
+    "ts": 1795162955818
+  },
+  {
+    "id": "mwpj4n3i9h5c",
+    "text": "Updated (21.2) The auto hitch used to try to unhitch and walk even when there's no hitching station, might as well lean in and just feed and mount on beef tap. It'll feed only one then mount, assuming it's already domesticated",
+    "ts": 1795212428526
+  },
+  {
+    "id": "mwpllqciufmq",
+    "text": "Looks like listers char count is wrong but it does list the mode(local L or remote R) and a function next to it. For  this autohitch update, you can just find and delete 21.2s old cmd then run and save the new one if you like",
+    "ts": 1795216585125
   }
 ]
