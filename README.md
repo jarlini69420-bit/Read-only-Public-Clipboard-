@@ -12,7 +12,7 @@ A lightweight, mobile-friendly web clipboard and companion toolset for **Don't S
 - **One-Tap Copy Cards:** Copy Lua console snippets straight to your clipboard without fighting mobile text-selection handles.
 - **Mobile Quote-Safe Formatting:** Uses Lua long brackets (`[[...]]`) so mobile autocorrect won't turn straight quotes into curly quotes and break syntax.
 - **Button Placer:** Visually position/configure buttons and export or copy the resulting console setup.
-- **Filter Box** Find commands you want to use quickly 
+- **Filter Box:** Find commands you want to use quickly 
 
 ---
 ## For iOS
@@ -42,7 +42,6 @@ You may also want to turn off smart/auto punctuation to avoid iOS messing up Lua
 
 ## Support & Links
 - **Ko-fi:** [Support starvedsteve on Ko-fi](https://ko-fi.com/starvedsteve)
-- **GitHub:** [@starvedsteve](https://github.com/starvedsteve)
 - **YouTube:** [starvedSteve](https://www.youtube.com/@starvedSteve)
 
 ---
