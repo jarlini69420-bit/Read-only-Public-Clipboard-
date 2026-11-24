@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MW macro compare</title>
+<style>
+:root{--bg:#161616;--card:#222;--ink:#e8e8e8;--mut:#9a9a9a;--line:#3a3a3a;--acc:#6aa9ff;--ok:#5fcf80;--warn:#f0b84a;--bad:#ff7b7b;--code:#1a1a1a}
+@media (prefers-color-scheme:light){:root{--bg:#f3f3f1;--card:#fff;--ink:#1d1d1d;--mut:#666;--line:#d6d6d2;--acc:#1f5fbf;--ok:#1f8a47;--warn:#a46a00;--bad:#c0392b;--code:#f0f0ee}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{padding:max(12px,env(safe-area-inset-top)) 12px max(24px,env(safe-area-inset-bottom))}
+h1{font-size:20px;margin:4px 0 12px}
+h2{font-size:16px;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 12px}
+label{display:block;font-size:13px;color:var(--mut);margin:8px 0 4px}
+input[type=text],input[type=number],select,textarea{width:100%;background:var(--code);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px;font:14px/1.35 ui-monospace,Menlo,Consolas,monospace}
+textarea{min-height:90px;resize:vertical}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer}
+button.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button.mini{padding:5px 9px;font-size:14px;min-width:34px}
+button:disabled{opacity:.4;cursor:default}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:5px 11px;font-size:13px;font-weight:600}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.modebtn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:12px;margin-top:4px}
+.colact{white-space:nowrap}
+.colact button{margin:0 3px 3px 0}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 12px;overflow:auto;z-index:10}
+.ov[hidden]{display:none}
+.dlg{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;width:100%;max-width:560px}
+.irow{border-top:1px solid var(--line);padding:8px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.irow .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.st{font-size:13px;color:var(--mut);margin-top:8px;min-height:1.2em}
+.st.ok{color:var(--ok)}.st.bad{color:var(--bad)}
+.sum{display:flex;gap:8px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13px}
+.pill b{font-weight:700}
+.item{border-top:1px solid var(--line);padding:8px 0}
+.item:first-of-type{border-top:0}
+.hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.no{font-weight:700}
+.badge{font-size:12px;border-radius:4px;padding:1px 6px;background:var(--line)}
+.badge.tag{background:transparent;border:1px solid var(--warn);color:var(--warn)}
+.badge.dup{background:var(--bad);color:#fff}
+.lbl{flex:1;min-width:0;overflow-wrap:anywhere}
+.mut{color:var(--mut);font-size:13px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--code);border:1px solid var(--line);border-radius:8px;padding:8px;margin:6px 0 0;font:12.5px/1.35 ui-monospace,Menlo,Consolas,monospace;max-height:260px;overflow:auto}
+details summary{cursor:pointer;font-weight:600;padding:6px 0}
+.mini{padding:4px 10px;font-size:13px}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:9px}
+table.results{width:100%;border-collapse:collapse;min-width:440px;font-size:13px}
+table.results th,table.results td{padding:8px 7px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.results th{position:sticky;top:0;background:var(--card);z-index:1;color:var(--mut)}
+table.results tr:last-child td{border-bottom:0}
+.colno{white-space:nowrap;font-weight:700;width:54px}
+.colresult{min-width:150px;overflow-wrap:anywhere}
+.colcmd{width:112px;white-space:nowrap}
+.showcmd{display:inline-block;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:5px 8px;font:600 12px system-ui;cursor:pointer}
+.cmdview{margin-top:6px;max-width:min(70vw,520px)}
+.result-hit{color:var(--ok)}.result-changed{color:var(--warn)}.result-miss{color:var(--bad)}.result-none{color:var(--mut)}
+.result-main{display:block}
+.sub{display:block;margin-top:3px;font-size:12px;color:var(--mut)}
+@media (max-width:720px){
+  body{padding-left:8px;padding-right:8px}
+  .tblwrap{border:0;overflow:visible}
+  table.results{display:block;min-width:0}
+  table.results thead{display:none}
+  table.results tbody{display:block}
+  table.results tr{display:grid;grid-template-columns:44px 1fr;gap:6px 8px;padding:10px;margin:0 0 8px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+  table.results td{display:block;padding:0;border:0}
+  table.results td.colno{grid-column:1;width:auto}
+  table.results td.colresult{grid-column:2;min-width:0}
+  table.results td.colcmd,table.results td.colact{grid-column:1 / -1;width:auto}
+  .cmdview{max-width:100%}
+  .colact button{margin-bottom:4px}
+}
+</style>
+</head>
+<body>
+<h1>MW macro compare</h1>
+
+<div class="card">
+  <h2>1. Macro from the device</h2>
+  <label for="paste">FreePastebin paste ID or raw URL</label>
+  <input type="text" id="paste" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="MB2pKYNVeuC- or https://freepastebin.com/raw/…">
+  <div class="row"><button id="getmac">Fetch paste</button></div>
+  <label for="mactext">or paste the macro text here</label>
+  <textarea id="mactext" spellcheck="false" placeholder="one command per line, starting with L or R"></textarea>
+  <div class="st" id="macst"></div>
+</div>
+
+<div class="card">
+  <h2>2. Clipboard index (contents.json)</h2>
+  <label for="idxurl">URL</label>
+  <input type="text" id="idxurl" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <div class="row"><button id="getidx" class="sec">Fetch index</button></div>
+  <div class="st" id="idxst"></div>
+</div>
+
+<div class="row" style="margin:0 0 12px"><button id="go">Compare</button><button id="rep" class="sec" disabled>Copy report</button><button id="lnk" class="sec">Copy link</button></div>
+
+<div id="tools" class="card" hidden>
+  <div class="chips" id="chips"></div>
+  <div class="row"><input type="text" id="q" placeholder="search label, function or text" style="flex:1;min-width:150px" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+  <div class="row"><button id="add" class="sec">+ Add line</button><button id="undo" class="sec" disabled>Undo</button><button id="cpnum" class="sec" disabled>Copy # list</button></div>
+  <div class="st" id="tblst"></div>
+</div>
+
+<div id="out"></div>
+
+<div id="idxonly" class="card" hidden></div>
+
+<div id="savecard" class="card" hidden>
+  <h2>3. Save the edited macro</h2>
+  <div class="row"><button id="cpmac" class="sec">Copy macro text</button><button id="dl" class="sec">Download .txt</button><button id="send">Send to device</button></div>
+  <div class="st" id="sendst"></div>
+  <label for="dlid">New FreePastebin paste ID</label>
+  <div class="row"><input type="text" id="dlid" readonly placeholder="Upload the edited macro first" style="flex:1;min-width:150px"><button id="cpid" class="sec" disabled>Copy ID</button><button id="cpcmd" class="sec" disabled>Copy MW_Dn</button><button id="cpgo" class="sec" disabled>Copy MW_Go()</button></div>
+  <div class="mut">Copy MW_Dn first; then Copy MW_Go() becomes available. In game, run MW_Dn([[ID]]), check the checksum, then run MW_Go() to apply. Your previous macro is saved as mw_macro_bak.</div>
+  <details style="margin-top:10px"><summary>Recent uploads on this browser</summary><div id="uphist" class="mut">No saved uploads yet.</div><button id="clearhist" class="sec mini" type="button">Clear upload history</button></details>
+</div>
+
+<div class="ov" id="ov" hidden><div class="dlg">
+  <h2 id="dtitle">Line</h2>
+  <label for="dmode">Mode</label><select id="dmode"><option>L</option><option>R</option></select>
+  <label for="dtag">Character tag (optional: wanda, or willow,winona)</label><input type="text" id="dtag" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <label for="dtext">Text</label><textarea id="dtext" spellcheck="false"></textarea>
+  <label for="dpos">Position (line number)</label><input type="number" id="dpos" min="1">
+  <div class="row"><label style="margin:0;display:flex;gap:8px;align-items:center"><input type="checkbox" id="dm" autocomplete="off"> end with --M (plus :tag)</label></div>
+  <div class="row"><button id="dsave">Save</button><button id="dcancel" class="sec">Cancel</button></div>
+</div></div>
+
+<script>
+(function(){
+"use strict";
+var DEFAULT_URL="https://raw.githubusercontent.com/jarlini69420-bit/Read-only-Public-Clipboard-/a5f49c6f9a8824d46ea8688ad22dcb4aa4ba8a03/contents.json";
+var $=function(id){return document.getElementById(id);};
+var state={header:"",lines:[],index:null,hist:[],report:"",f:{},q:"",shown:false,dlg:null,R:null};
+var HDR=/^KLEI\s+\d+\s*\*?/;
+
+function store(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function recall(k){try{return localStorage.getItem(k)||"";}catch(e){return "";}}
+function getUploadHistory(){try{var a=JSON.parse(localStorage.getItem("mwc_upload_history")||"[]");return Array.isArray(a)?a:[];}catch(e){return [];}}
+function saveUploadHistory(a){try{localStorage.setItem("mwc_upload_history",JSON.stringify(a.slice(0,10)));}catch(e){}}
+function renderUploadHistory(){var box=$("uphist");if(!box)return;box.textContent="";var a=getUploadHistory();if(!a.length){box.textContent="No saved uploads yet.";return;}a.forEach(function(x){var row=el("div","item"),line=el("div",null,(x.date||"")+" · "+x.id+" · "+(x.chars||0)+" chars"),btn=el("button","sec mini","Use ID");btn.type="button";btn.addEventListener("click",function(){$("paste").value=x.id;$("dlid").value=x.id;store("mwc_paste",x.id);$("cpid").disabled=false;$("cpcmd").disabled=false;$("cpgo").disabled=true;});row.appendChild(line);row.appendChild(btn);box.appendChild(row);});}
+function setSt(id,msg,cls){var e=$(id);e.textContent=msg;e.className="st"+(cls?" "+cls:"");}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+
+/* same cleanup as the in-game MW_N (macro lines may carry @tag| and --M:tag) */
+function norm(s,isMacro){
+  s=String(s==null?"":s).replace(HDR,"").replace(/^\s+/,"").replace(/\s+$/,"");
+  if(isMacro){s=s.slice(1).replace(/^@[^|]+\|/,"");}
+  s=s.replace(/SetPosition\s*\(\s*\((.*?)-w\.x\)\s*\/\s*k\s*,\s*\((.*?)-w\.y\)\s*\/\s*k\s*\)/g,"SetPosition((X-w.x)/k,(Y-w.y)/k)");
+  return s.replace(/\s*--M\S*\s*$/,"").replace(/\s*--RUN\s*$/,"").replace(/\s+$/,"");
+}
+function splitText(txt){
+  var ls=String(txt).replace(/\r/g,"").split("\n"),hdr="",out=[];
+  for(var i=0;i<ls.length;i++){
+    var l=ls[i];if(!l.trim())continue;
+    if(HDR.test(l)){var r=l.replace(HDR,"");if(!r.trim()){hdr=l;continue;}hdr=l.slice(0,l.length-r.length);l=r;}
+    out.push(l);
+  }
+  return {header:hdr,lines:out};
+}
+function parseLine(l,no){
+  var mode=l.charAt(0),rest=l.slice(1),tag="",m=/^@([^|]+)\|/.exec(rest);
+  if(m){tag=m[1];rest=rest.slice(m[0].length);}
+  return {no:no,raw:l,mode:mode,tag:tag,text:rest,len:rest.length,n:norm(l,true)};
+}
+function parseIndex(d){
+  var arr=Array.isArray(d)?d:(d&&Array.isArray(d.items)?d.items:(d&&Array.isArray(d.contents)?d.contents:(d&&typeof d==="object"?Object.keys(d).map(function(k){return d[k];}):[])));
+  return arr.map(function(c,i){
+    var isO=c&&typeof c==="object";
+    var t=isO?(c.text||c.script||c.content||c.cmd||""):String(c);
+    var lb=isO?(c.label||c.title||c.name||String(i+1)):String(i+1);
+    return {i:i+1,label:String(lb),text:String(t),len:String(t).length,n:norm(t,false)};
+  });
+}
+function prefixLen(a,b){var n=Math.min(a.length,b.length),i=0;while(i<n&&a.charCodeAt(i)===b.charCodeAt(i))i++;return i;}
+
+function compare(){
+  var M=state.lines.map(function(l,i){return parseLine(l,i+1);}),X=state.index||[];
+  var byN={},seen={},usedX={};
+  X.forEach(function(e){if(e.n)(byN[e.n]=byN[e.n]||[]).push(e);});
+  M.forEach(function(m){seen[m.n]=(seen[m.n]||0)+1;});
+  var cnt={hit:0,changed:0,miss:0,dup:0};
+  M.forEach(function(m){
+    m.dup=m.n!==""&&seen[m.n]>1;if(m.dup)cnt.dup++;
+    var h=m.n&&byN[m.n];
+    if(h){m.st="hit";m.hit=h;h.forEach(function(e){usedX[e.i]=1;});cnt.hit++;return;}
+    if(!state.index){m.st="none";return;}
+    var best=null,bl=0;
+    X.forEach(function(e){if(e.n.length<30||m.n.length<30)return;var p=prefixLen(m.n,e.n);if(p>bl){bl=p;best=e;}});
+    if(best&&bl>=40&&bl>=0.4*Math.min(m.n.length,best.n.length)){m.st="changed";m.near=best;m.cp=bl;usedX[best.i]=1;cnt.changed++;}
+    else{m.st="miss";cnt.miss++;}
+  });
+  var onlyX=X.filter(function(e){return e.n&&!usedX[e.i];});
+  return {M:M,X:X,onlyX:onlyX,cnt:cnt};
+}
+
+function textBox(t){var d=el("details");d.appendChild(el("summary",null,"show text"));d.appendChild(el("pre",null,t));return d;}
+function copyTxt(t,btn){
+  function done(){var o=btn.textContent;btn.textContent="Copied";setTimeout(function(){btn.textContent=o;},1200);}
+  if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(done,fb);}else fb();
+  function fb(){var a=document.createElement("textarea");a.value=t;a.style.cssText="position:fixed;opacity:0";document.body.appendChild(a);a.select();try{document.execCommand("copy");done();}catch(e){}document.body.removeChild(a);}
+}
+function ranges(nums){
+  nums=nums.slice().sort(function(a,b){return a-b;});var out=[],i=0;
+  while(i<nums.length){var j=i;while(j+1<nums.length&&nums[j+1]===nums[j]+1)j++;out.push(j>i?nums[i]+"-"+nums[j]:String(nums[i]));i=j+1;}
+  return out;
+}
+function shortText(s,n){s=String(s||"").replace(/\s+/g," ").trim();return s.length>n?s.slice(0,n-1)+"…":s;}
+function missName(m){
+  var s=m.text||"",q=/\blocal\s+function\s+([A-Za-z_$][\w$.:]*)|\bfunction\s+([A-Za-z_$][\w$.:]*)/.exec(s);
+  if(q)return "function "+(q[1]||q[2]);
+  q=/([A-Za-z_$][\w$.]*)\s*=\s*function/.exec(s);
+  if(q)return "function "+q[1];
+  return shortText(s,20)||"(empty command)";
+}
+
+/* ---------- rendering ---------- */
+var CHIPS=[["hit","Hit"],["changed","Changed"],["miss","No hit"],["dup","Duplicates"]];
+function visible(R){
+  var on=Object.keys(state.f).filter(function(k){return state.f[k];}),q=state.q.trim().toLowerCase();
+  return R.M.filter(function(m){
+    if(on.length&&!on.some(function(k){return k==="dup"?m.dup:m.st===k;}))return false;
+    if(q){var lbl=m.hit?m.hit.map(function(e){return e.label;}).join(" "):"";if((lbl+" "+missName(m)+" "+m.text+" "+m.tag).toLowerCase().indexOf(q)<0)return false;}
+    return true;
+  });
+}
+function actBtn(txt,title,fn,dis){var b=el("button","sec mini",txt);b.title=title;b.setAttribute("aria-label",title);b.disabled=!!dis;b.addEventListener("click",function(e){e.stopPropagation();fn();});return b;}
+
+function render(){
+  var R=state.R=compare(),out=$("out");out.textContent="";
+  $("tools").hidden=false;$("savecard").hidden=false;
+  var sum=el("div","card sum");
+  [["macro lines",R.M.length,"ink"],["matched",R.cnt.hit,"ok"],["changed",R.cnt.changed,"warn"],["MISS",R.cnt.miss,"bad"],["only in index",R.onlyX.length,"acc"]].forEach(function(a){
+    var p=el("span","pill");p.appendChild(el("b",null,String(a[1])+" "));p.appendChild(document.createTextNode(a[0]));p.style.color="var(--"+a[2]+")";sum.appendChild(p);
+  });
+  out.appendChild(sum);
+  var chips=$("chips");chips.textContent="";
+  CHIPS.forEach(function(p){var b=el("button","chip"+(state.f[p[0]]?" on":""),p[1]+" "+(R.cnt[p[0]]||0));b.addEventListener("click",function(){state.f[p[0]]=!state.f[p[0]];render();});chips.appendChild(b);});
+  var rows=visible(R),filtering=Object.keys(state.f).some(function(k){return state.f[k];})||!!state.q.trim();
+
+  var card=el("div","card"),wrap=el("div","tblwrap"),table=el("table","results"),thead=el("thead"),tr=el("tr");
+  ["Line #","Comparison","Command","Edit"].forEach(function(t){tr.appendChild(el("th",null,t));});thead.appendChild(tr);table.appendChild(thead);
+  var tbody=el("tbody");
+  rows.forEach(function(m){
+    var row=el("tr"),no=el("td","colno",String(m.no)),result=el("td","colresult"),cmd=el("td","colcmd"),act=el("td","colact");
+    var mb=el("button","modebtn",m.mode);mb.title="Edit line "+m.no;mb.addEventListener("click",function(){openDlg("edit",m);});no.appendChild(el("br"));no.appendChild(mb);
+    var main=el("span","result-main"),label;
+    if(m.hit){label=shortText(m.hit.map(function(e){return e.label;}).join(", "),20);result.className+=" result-hit";main.textContent="HIT · "+label;}
+    else if(m.near){label=shortText(m.near.label,20);result.className+=" result-changed";main.textContent="CHANGED · "+label;}
+    else if(m.st==="miss"){result.className+=" result-miss";main.textContent="NO HIT · "+missName(m);}
+    else{result.className+=" result-none";main.textContent=missName(m);}
+    result.appendChild(main);
+    var sub=el("span","sub",m.len+" chars"+(m.tag?"  ·  @"+m.tag:"")+(m.dup?"  ·  DUPLICATE":"")+(m.mode==="R"?"  ·  remote":""));result.appendChild(sub);
+    var details=el("details"),summary=el("summary","showcmd","Show command");details.appendChild(summary);details.appendChild(el("pre","cmdview",m.text));
+    if(m.near)details.appendChild(el("pre","cmdview","INDEX ("+m.near.label+", first "+m.cp+" chars identical):\n"+m.near.text));
+    cmd.appendChild(details);
+    var can=!filtering;
+    act.appendChild(actBtn("↑","Move up",function(){move(m.no-1,m.no-2);},!can||m.no===1));
+    act.appendChild(actBtn("↓","Move down",function(){move(m.no-1,m.no);},!can||m.no===R.M.length));
+    act.appendChild(actBtn("⇅","Move to line number",function(){var v=parseInt(prompt("Move line "+m.no+" to line number (1-"+R.M.length+")",String(m.no)),10);if(v>=1&&v<=R.M.length)move(m.no-1,v-1);}));
+    act.appendChild(actBtn("✎","Edit",function(){openDlg("edit",m);}));
+    act.appendChild(actBtn("✕","Delete",function(){if(confirm("Delete line "+m.no+"?\n"+shortText(m.text,120)))del(m.no-1);}));
+    row.appendChild(no);row.appendChild(result);row.appendChild(cmd);row.appendChild(act);tbody.appendChild(row);
+  });
+  table.appendChild(tbody);wrap.appendChild(table);card.appendChild(wrap);out.appendChild(card);
+  setSt("tblst",rows.length+" of "+R.M.length+" lines shown"+(filtering?" (clear filters to reorder)":"")+(state.index?"":" - index not loaded, comparison skipped"));
+  $("cpnum").disabled=!rows.length;$("undo").disabled=!state.hist.length;
+
+  var io=$("idxonly");io.textContent="";
+  if(R.onlyX.length){
+    io.hidden=false;var d=el("details");d.appendChild(el("summary",null,"In the index but not in your macro ("+R.onlyX.length+")"));
+    R.onlyX.forEach(function(e){
+      var it=el("div","irow");it.appendChild(el("b",null,"#"+e.i));it.appendChild(el("span","t",shortText(e.label,40)));it.appendChild(el("span","mut",e.len+" chars"));
+      it.appendChild(actBtn("+ Add","Add to the end of the macro",function(){ins(state.lines.length,"L"+e.text+(/--M\S*\s*$/.test(e.text)?"":" --M"));}));
+      d.appendChild(it);
+    });
+    io.appendChild(d);
+  }else io.hidden=true;
+
+  var lines=["macro lines "+R.M.length+", matched "+R.cnt.hit+", changed "+R.cnt.changed+", no hit "+R.cnt.miss+", only in index "+R.onlyX.length];
+  lines.push("line | result | command");
+  R.M.forEach(function(m){var v=m.hit?"HIT: "+shortText(m.hit.map(function(e){return e.label;}).join(", "),20):m.near?"CHANGED: "+shortText(m.near.label,20):m.st==="miss"?"NO HIT: "+missName(m):"-";lines.push(m.no+" | "+v+" | "+m.text);});
+  state.report=lines.join("\n");$("rep").disabled=false;
+}
+
+/* ---------- editing ---------- */
+function syncTA(){$("mactext").value=(state.header?state.header+"\n":"")+state.lines.join("\n");}
+function commit(arr){state.hist.push(state.lines.slice());if(state.hist.length>60)state.hist.shift();state.lines=arr;syncTA();render();}
+function move(from,to){var a=state.lines.slice(),x=a.splice(from,1)[0];a.splice(to,0,x);commit(a);}
+function del(i){var a=state.lines.slice();a.splice(i,1);commit(a);}
+function ins(pos,line){var a=state.lines.slice();a.splice(pos,0,line);commit(a);}
+function openDlg(kind,m){
+  state.dlg={kind:kind,m:m};
+  $("dtitle").textContent=kind==="edit"?"Edit line "+m.no:"Add line";
+  $("dmode").value=kind==="edit"&&m.mode==="R"?"R":"L";
+  $("dtag").value=kind==="edit"?m.tag:"";
+  var t=kind==="edit"?m.text:"";
+  $("dtext").value=t.replace(/\s*--M\S*\s*$/,"");
+  $("dm").checked=kind==="edit"?/\s--M\S*\s*$/.test(t):true;
+  $("dpos").value=kind==="edit"?m.no:state.lines.length+1;$("dpos").disabled=(kind==="edit");
+  $("ov").hidden=false;
+}
+function closeDlg(){$("ov").hidden=true;state.dlg=null;}
+$("dcancel").addEventListener("click",closeDlg);
+$("dsave").addEventListener("click",function(){
+  var d=state.dlg;if(!d)return;
+  var tag=$("dtag").value.replace(/[^A-Za-z0-9_,]/g,""),txt=$("dtext").value.replace(/\s+$/,"").replace(/\n+/g," ").replace(/\s*--M\S*\s*$/,"");
+  if(!txt){alert("Text is empty");return;}
+  var line=$("dmode").value+(tag?"@"+tag+"|":"")+txt+($("dm").checked?" --M"+(tag?":"+tag:""):"");
+  if(d.kind==="edit"){var a=state.lines.slice();a[d.m.no-1]=line;closeDlg();commit(a);}
+  else{var p=parseInt($("dpos").value,10);if(!(p>=1))p=state.lines.length+1;p=Math.min(p,state.lines.length+1);closeDlg();ins(p-1,line);}
+});
+$("add").addEventListener("click",function(){openDlg("add");});
+$("undo").addEventListener("click",function(){if(!state.hist.length)return;state.lines=state.hist.pop();syncTA();render();});
+$("q").addEventListener("input",function(){state.q=$("q").value;if(state.shown)render();});
+
+/* ---------- FreePastebin ---------- */
+function fetchText(url){return fetch(url,{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.text();});}
+function check(s){ /* same code the game prints: djb2 over the utf-8 bytes */
+  var b=new TextEncoder().encode(s),h=5381;for(var i=0;i<b.length;i++)h=(h*33+b[i])%4294967296;
+  return ("00000000"+h.toString(16)).slice(-8);
+}
+function pasteId(){var v=$("paste").value.trim(),m=v.match(/freepastebin\.com\/(?:raw\/)?([A-Za-z0-9_-]+)/i);return (m?m[1]:v).replace(/[^A-Za-z0-9_-]/g,"");}
+function loadText(txt){var p=splitText(txt);state.header=p.header;state.lines=p.lines;state.hist=[];syncTA();}
+
+$("getmac").addEventListener("click",function(){
+  var id=pasteId();if(!id){setSt("macst","enter a FreePastebin paste ID or raw URL","bad");return;}
+  store("mwc_paste",id);setSt("macst","fetching paste...");
+  fetchText("https://freepastebin.com/raw/"+encodeURIComponent(id)).then(function(txt){
+    loadText(txt);setSt("macst","got paste "+id+", "+txt.length+" chars","ok");
+    if(state.shown)render();
+  }).catch(function(e){setSt("macst","failed: "+e.message,"bad");});
+});
+$("mactext").addEventListener("input",function(){var p=splitText($("mactext").value);state.header=p.header;state.lines=p.lines;if(state.shown)render();});
+$("getidx").addEventListener("click",function(){
+  var u=$("idxurl").value.trim();if(!u){setSt("idxst","enter a URL","bad");return;}
+  store("mwc_url",u);setSt("idxst","fetching...");
+  fetchText(u).then(function(txt){state.index=parseIndex(JSON.parse(txt));setSt("idxst",state.index.length+" index entries","ok");if(state.shown)render();})
+    .catch(function(e){setSt("idxst","failed: "+e.message,"bad");});
+});
+$("go").addEventListener("click",function(){
+  var p=splitText($("mactext").value);state.header=p.header;state.lines=p.lines;
+  if(!state.lines.length){setSt("macst","no macro text yet","bad");return;}
+  state.shown=true;render();
+});
+$("rep").addEventListener("click",function(){copyTxt(state.report,$("rep"));});
+$("cpnum").addEventListener("click",function(){copyTxt(ranges(visible(state.R).map(function(m){return m.no;})).join(","),$("cpnum"));});
+$("cpmac").addEventListener("click",function(){copyTxt((state.header?state.header+"\n":"")+state.lines.join("\n"),$("cpmac"));});
+$("dl").addEventListener("click",function(){
+  var b=new Blob([(state.header?state.header+"\n":"")+state.lines.join("\n")],{type:"text/plain"}),a=document.createElement("a");
+  a.href=URL.createObjectURL(b);a.download="mw_macro.txt";document.body.appendChild(a);a.click();document.body.removeChild(a);
+});
+$("send").addEventListener("click",function(){
+  if(!state.lines.length){setSt("sendst","nothing to send","bad");return;}
+  var all=state.lines.join("\n"),code=check(all);
+  if(all.length>1048576){setSt("sendst","macro exceeds FreePastebin's 1 MiB limit","bad");return;}
+  if(!confirm("Upload "+state.lines.length+" lines ("+all.length+" chars) to FreePastebin?\nThen copy the paste ID and run MW_Dn([[ID]]) and MW_Go() in the game."))return;
+  $("send").disabled=true;$("dlid").value="";$("cpid").disabled=true;$("cpcmd").disabled=true;$("cpgo").disabled=true;
+  setSt("sendst","creating FreePastebin paste...");
+  fetch("https://freepastebin.com/api/pastes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({content:all,title:"DST macro",language:"text"})})
+    .then(function(r){return r.text().then(function(body){if(!r.ok)throw new Error("HTTP "+r.status+" "+body);var j;try{j=JSON.parse(body);}catch(e){throw new Error("invalid API response: "+body);}var raw=j.raw_url||j.rawUrl||j.url||"",id=(raw.match(/\/raw\/([A-Za-z0-9_-]+)/)||[])[1]||j.id||j.paste_id;if(!id)throw new Error("paste created but no ID found: "+body);return String(id);});})
+    .then(function(id){$("dlid").value=id;$("paste").value=id;store("mwc_paste",id);$("cpid").disabled=false;$("cpcmd").disabled=false;$("cpgo").disabled=true;var h=getUploadHistory();h.unshift({id:id,date:new Date().toLocaleString(),chars:all.length,code:code});saveUploadHistory(h);renderUploadHistory();setSt("sendst","uploaded "+state.lines.length+" lines, "+all.length+" chars, code "+code+". Copy MW_Dn, then MW_Go() becomes available.","ok");})
+    .catch(function(e){setSt("sendst","upload failed: "+e.message,"bad");})
+    .finally(function(){$("send").disabled=false;});
+});
+$("cpid").addEventListener("click",function(){if($("dlid").value)copyTxt($("dlid").value,$("cpid"));});
+$("cpcmd").addEventListener("click",function(){if($("dlid").value){copyTxt("MW_Dn([["+$("dlid").value+"]])",$("cpcmd"));$("cpgo").disabled=false;}});
+$("cpgo").addEventListener("click",function(){copyTxt("MW_Go()",$("cpgo"));});
+$("clearhist").addEventListener("click",function(){saveUploadHistory([]);renderUploadHistory();});
+$("lnk").addEventListener("click",function(){
+  var id=pasteId();if(!id){setSt("macst","enter a FreePastebin paste ID first","bad");return;}
+  var u=$("idxurl").value.trim();
+  copyTxt(location.href.split("#")[0].split("?")[0]+"?paste="+encodeURIComponent(id)+(u&&u!==DEFAULT_URL?"&u="+encodeURIComponent(u):""),$("lnk"));
+});
+
+var qp=null;try{qp=new URLSearchParams(window.location.search);}catch(e){}
+var pasteParam=(qp&&qp.get("paste"))||"";
+$("paste").value=pasteParam||recall("mwc_paste");
+renderUploadHistory();
+if(pasteParam)store("mwc_paste",pasteParam);
+$("idxurl").value=(qp&&qp.get("u"))||recall("mwc_url")||DEFAULT_URL;
+window.__mwc={norm:norm,splitText:splitText,compare:compare,check:check,state:state};
+})();
+</script>
+</body>
+</html>
