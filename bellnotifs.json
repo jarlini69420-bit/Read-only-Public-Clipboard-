@@ -136,7 +136,7 @@
   },
   {
     "id": "mwu9n6fhua5f",
-    "text": "Added (8.5.2) a new \"lister\" that exports your current macro then lists it in a webpage instead, no more need for chatscreen+ using ntfy.sh. Depending on your macro length, the daily limits apply. Example I got an 80line macro, i can only upload 11times a day, i think. Change the placeholder topic on 8.5.1 before using or you'll overwrite each other.",
+    "text": "Added (8.5.2) a new \"lister\" that exports your current macro then lists it in a webpage instead, no more need for chatscreen+ using freepastebin. Depending on your macro length, the daily limits apply. Example I got an 80line macro, i can only upload 11times a day, i think. Change the placeholder topic on 8.5.1 before using or you'll overwrite each other.",
     "ts": 1795498828109
   },
   {
