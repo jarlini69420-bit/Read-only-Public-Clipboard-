@@ -60,7 +60,7 @@
     "label": "8.3 (Local) Adds new commands to save in the persistent string"
   },
   {
-    "text": "TheSim:GetPersistentString([[mw_macro]],function(ok,old)if not ok then Networking_SystemMessage([[mw_macro unreadable: nothing saved]])return end TheSim:SetPersistentString([[mw_macro_sv]],old,false)local L,K={},{}local function add(l)local k=l:sub(2)if K[k]then L[K[k]]=l else L[#L+1]=l K[k]=#L end end for l in old:gmatch(([[[^]]..string.char(10)..[[]+]]))do add(l)end for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory())do local s=v.str if s:find([[--M]],1,true)and not s:find([[--RUN]],1,true)and not s:find([[mw_macro]],1,true)and not s:find([[ConsoleScreenSettings]],1,true)then local t=s:match([[%-%-M:([%w_,]+)%s*$]])add((v.remote and [[R]]or [[L]])..(t and [[@]]..t..[[|]]or [[]])..s)end end TheSim:SetPersistentString([[mw_macro]],table.concat(L,string.char(10)),false)Networking_SystemMessage([[MW macro saved: ]]..#L..[[ lines]])ConsoleScreenSettings:Reset()end) --RUN",
+    "text": "TheSim:GetPersistentString([[mw_macro]],function(ok,old)if not ok then Networking_SystemMessage([[mw_macro unreadable: nothing saved]])return end TheSim:SetPersistentString([[mw_macro_sv]],old,false)local L,K={},{}local function add(l)local k=l:sub(2)if K[k]then L[K[k]]=l else L[#L+1]=l K[k]=#L end end for l in old:gmatch(([[[^]]..string.char(10)..[[]+]]))do add(l)end for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory())do local s=v.str if s:find([[--M]],1,true)and not s:find([[--RUN]],1,true)and not s:find([[ConsoleScreenSettings]],1,true)then local t=s:match([[%-%-M:([%w_,]+)%s*$]])add((v.remote and [[R]]or [[L]])..(t and [[@]]..t..[[|]]or [[]])..s)end end TheSim:SetPersistentString([[mw_macro]],table.concat(L,string.char(10)),false)Networking_SystemMessage([[MW macro saved: ]]..#L..[[ lines]])ConsoleScreenSettings:Reset()end) --RUN",
     "label": "8.3.2 (local) just 8.3 but with console history clear right after"
   },
   {
@@ -190,6 +190,22 @@
   {
     "text": "local A,B,F=1,9999,[[]] TheSim:GetPersistentString([[mw_macro]],function(ok,s) if not ok or not s then return end local P=[[[^]]..string.char(10)..[[]+]] local Q,n={},0 for l in s:gmatch(P) do n=n+1 if n>=A and n<=B and (F==[[]] or l:find(F,1,true)) then local b,d=l:sub(2),{} for k in b:gmatch([[function%s+([%w_%.:]+)]]) do d[#d+1]=k end for k in b:gmatch([[([%w_%.]+)%s*=%s*function]]) do d[#d+1]=k end Q[#Q+1]=[[#]]..n..[[ ]]..l:sub(1,1)..[[ ]]..table.concat(d,[[,]],1,math.min(#d,3))..[[ | ]]..(#b>66 and b:sub(1,40)..[[ .. ]]..b:sub(-24) or b)..[[ (]]..#(b:gsub([[^@[^|]+|]],[[]]))..[[)]] end end Networking_SystemMessage([[mw_macro: ]]..n..[[ lines, showing ]]..#Q) local i=0 local function go() i=i+1 if Q[i] then ChatHistory:AddToHistory(ChatTypes.SystemMessage,nil,nil,nil,Q[i],{.7,.85,1,1},nil,nil,true) if ThePlayer then ThePlayer:DoTaskInTime(.3,go) else go() end end end go() end) --RUN",
     "label": "8.5 (Local) lists all commands in the macro to chat history | use 26 to view and scroll thru the list"
+  },
+  {
+    "text": "function MW_Up() local Z=Networking_SystemMessage TheSim:GetPersistentString([[mw_macro]],function(ok,s) if not ok or not s then Z([[no mw_macro]]) return end local e=s:gsub([[\\]],[[\\\\]]):gsub([[\"]],[[\\\"]]):gsub(string.char(10),[[\\n]]):gsub(string.char(13),[[\\r]]):gsub(string.char(9),[[\\t]]) local b=[[{\"content\":\"]]..e..[[\",\"title\":\"DST macro\",\"language\":\"text\"}]] TheSim:QueryServer([[https://freepastebin.com/api/pastes]],function(r,k,c) if not k or c~=201 then Z([[upload failed ]]..tostring(c)..[[ ]]..tostring(r)) return end local u=r:match([[\"raw_url\"%s*:%s*\"([^\"]+)\"]]) local id=u and u:match([[/raw/([^%s\"]+)]]) if not id then Z([[uploaded but couldn't read ID: ]]..tostring(r)) return end Z([[uploaded ]]..id) if VisitURL then VisitURL([[https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/mw-compare.html?paste=]]..id,true) end end,[[POST]],b) end) end --M",
+    "label": "8.5.2.1 (local) read macro from html | Uploader"
+  },
+  {
+    "text": "MW_Up() --RUN",
+    "label": "8.5.2.3 (local) start upload and open list in browser | before running: save manually or wait for new day autosave to avoid losing progress while game is in bg | or just be in your own test server"
+  },
+  {
+    "text": "function MW_Ck(x) local h=5381 for i=1,#x do h=(h*33+x:byte(i))%4294967296 end return string.format([[%08x]],h) end function MW_Go() local Z=Networking_SystemMessage local x=MW_DX if type(x)~=[[string]] or not x:match([=[^[LR]]=]) then Z([[nothing to apply. run MW_Dn() first]]) return end TheSim:GetPersistentString([[mw_macro]],function(ok,old) if ok and old then TheSim:SetPersistentString([[mw_macro_bak]],old,false) end TheSim:SetPersistentString([[mw_macro]],x,false) MW_DX=false Z([[mw_macro replaced, code ]]..MW_Ck(x)..[[, old kept as mw_macro_bak]]) end) end --M",
+    "label": "8.5.3.1 (Local) Download apply"
+  },
+  {
+    "text": "rawset(_G,[[MW_DX]],false); function MW_Dn(id) local Z=Networking_SystemMessage if type(id)~=[[string]] or id==[[]] then Z([[provide paste ID]]) return end TheSim:QueryServer([[https://freepastebin.com/raw/]]..id,function(r,ok,c) if not ok or c~=200 or type(r)~=[[string]] then Z([[download failed ]]..tostring(c)) return end if not r:match([=[^[LR]]=]) then Z([[invalid macro data]]) return end MW_DX=r Z([[downloaded ]]..#r..[[ chars, code ]]..MW_Ck(r)..[[. MW_Go() applies; old macro will be backed up]]) end) end --M",
+    "label": "8.5.3.1 (Local) Download and update you macro | You can still restore | Read the instructions on compare html carefully | two function calls in the html"
   },
   {
     "text": "local D={67} TheSim:GetPersistentString([[mw_macro]],function(ok,s) if not ok or not s then return end TheSim:SetPersistentString([[mw_macro_bak]],s,false) local P=[[[^]]..string.char(10)..[[]+]] local L,X,O={},{},{} for l in s:gmatch(P) do L[#L+1]=l end for _,d in ipairs(D) do local a,b=tostring(d):match([[(%d+)-?(%d*)]]) a=tonumber(a) b=tonumber(b) or a if a then for i=a,b do X[i]=true end end end for i,l in ipairs(L) do if not X[i] then O[#O+1]=l end end TheSim:SetPersistentString([[mw_macro]],table.concat(O,string.char(10)),false) Networking_SystemMessage([[mw_macro: ]]..#L..[[ -> ]]..#O..[[ lines, backup saved]]) end) --RUN",
@@ -406,6 +422,22 @@
   {
     "text": "local A=ACTIONS.ATTACK A._mw=A._mw or A.fn A.fn=function(act) local t,d=act.target,act.doer if d and d.prefab==[[wendy]] and t and t.prefab==[[abigail]] then return false end return A._mw(act) end --M:wendy",
     "label": "34 (remote) Prevent Wendy from hitting her sister"
+  },
+  {
+    "text": "MW_DI=rawget(_G,[[MW_DI]]) or .05 MW_DA=rawget(_G,[[MW_DA]]) or .5 MW_AT,MW_IM=false,false function MW_Rc() local L={} for n,r in pairs(AllRecipes) do if r.product==[[wx78_drone_scout]] or (n:find([[wx78]]) and n:find([[scout]])) then MW_AT,MW_IM=r.atlas or GetInventoryItemAtlas(r.image),r.image return end if n:find([[drone]]) or n:find([[scout]]) then L[#L+1]=n end end Networking_SystemMessage([[drone: no recipe icon. similar: ]]..table.concat(L,[[,]])) end --M:wx78",
+    "label": "35.1 WX Scout drone icon when idle (1/4) | Well, its split short cause reasons"
+  },
+  {
+    "text": "local P=ThePlayer local C=P.HUD.controls MW_Rc() if not MW_IM then return end if C.mwdg then C.mwdg:Kill() end local T=C.right_root local g=T:AddChild(require[[widgets/widget]]([[mwdg]])) C.mwdg=g local W,H=TheSim:GetScreenSize() local w=T:GetWorldPosition() local k=T:GetWorldScale().x g:SetPosition((W*.18-w.x)/k,(H*.2-w.y)/k) local i=g:AddChild(require[[widgets/image]](MW_AT,MW_IM)) i:SetClickable(false) i:ScaleToSize(MW_DI*H/k,MW_DI*H/k) local c=g:AddChild(require[[widgets/image]]([[images/global_redux.xml]],[[radiobutton_filled_gold_on.tex]])) c:SetClickable(false) c:ScaleToSize(.03*H/k,.03*H/k) c:SetPosition(.025*H/k,-.022*H/k) local t=g:AddChild(require[[widgets/text]](NUMBERFONT,.02*H/k,[[2]])) t:SetPosition(.025*H/k,-.022*H/k) g.i,g.c,g.t,g.image=i,c,t,i g:Hide() --M:wx78",
+    "label": "35.3 WX Scout drone icon when idle (3/4)"
+  },
+  {
+    "text": "MW_DS,MW_DL,MW_DT,MW_DN={},{},0,0 function MW_DnS() local S=MW_DS if MW_DT<=0 then MW_DT=2 MW_DL={} local N={} for _,e in pairs(Ents) do if e.prefab==[[wx78_drone_scout_globalicon]] then MW_DL[#MW_DL+1]=e N[e]=S[e] end end S=N MW_DS=N end MW_DT=MW_DT-.25 local n=0 for _,e in ipairs(MW_DL) do if e:IsValid() then local x,_,z=e.Transform:GetWorldPosition() local s=S[e] or {x=x,z=z,t=0} if (x-s.x)^2+(z-s.z)^2>.04 then s.x,s.z,s.t=x,z,0 else s.t=s.t+.25 end S[e]=s if s.t>=1.5 then n=n+1 end end end MW_DN=math.min(n,2) end --M:wx78",
+    "label": "35.2 WX Scout drone icon when idle (2/4)"
+  },
+  {
+    "text": "function MW_DnU() local g=ThePlayer.HUD.controls.mwdg if not g then return end local a=MW_DA if MW_DN>0 then g.i:SetTint(1,1,1,a) g.c:SetTint(.1,.4,.15,.9*a) g.t:SetColour(1,1,1,a) if MW_DN>1 then g.c:Show() g.t:Show() else g.c:Hide() g.t:Hide() end g:Show() else g:Hide() end end local P=ThePlayer if P._mwdt then P._mwdt:Cancel() end P._mwdt=P:DoPeriodicTask(.25,function() local o,e=pcall(function() MW_DnS() MW_DnU() end) if not o and not P._mwde then P._mwde=1 Networking_SystemMessage([[drone: ]]..tostring(e)) end end) --M:wx78",
+    "label": "35.4 WX Scout drone icon when idle (4/4)"
   },
   {
     "text": "Hey! I need help adjusting the coordinate values for a custom Don't Starve Together mobile console command. Because of my device's resolution and HUD scale, the virtual buttons/UI elements created by this script aren't aligning correctly with my screen. Here is my current one-liner command: [PASTE YOUR FULL COMMAND STRING HERE] I’ve attached a screenshot of my DST mobile game in-case you need to reference the layout. Can you calculate the math for the new positions/sizes and rewrite this into an updated, single-line command string that I can copy and paste directly into the game console?",

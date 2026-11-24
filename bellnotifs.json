@@ -100,11 +100,6 @@
     "ts": 1795119143568
   },
   {
-    "id": "mwnzqzwz2sis",
-    "text": "Updated (8.3) savers to align with the new character filters and guards to read fails just incase",
-    "ts": 1795119413075
-  },
-  {
     "id": "mwo3ukuvj5ag",
     "text": "Updated clipboard to have character counts to make it easier to identify which specific command you have in the list made by (8.5)",
     "ts": 1795126298647
@@ -131,7 +126,27 @@
   },
   {
     "id": "mwpllqciufmq",
-    "text": "Looks like listers char count is wrong but it does list the mode(local L or remote R) and a function next to it. For  this autohitch update, you can just find and delete 21.2s old cmd then run and save the new one if you like",
+    "text": "Looks like (8.5) chat lister's char count is wrong but it does list the mode(local L or remote R) and a function next to it. For  this autohitch update, you can just find and delete 21.2s old cmd then run and save the new one if you like",
     "ts": 1795216585125
+  },
+  {
+    "id": "mwqzjkjxnjaq",
+    "text": "Added (35) WX Scout drone icon when  one or both (shows 2)  are done exploring/idle",
+    "ts": 1795300465103
+  },
+  {
+    "id": "mwu9n6fhua5f",
+    "text": "Added (8.5.2) a new \"lister\" that exports your current macro then lists it in a webpage instead, no more need for chatscreen+ using ntfy.sh. Depending on your macro length, the daily limits apply. Example I got an 80line macro, i can only upload 11times a day, i think. Change the placeholder topic on 8.5.1 before using or you'll overwrite each other.",
+    "ts": 1795498828109
+  },
+  {
+    "id": "mwucpfqanhcl",
+    "text": "Added (8.5.3) Download your edited macro from browser. Why all this? Just to see if its possible. This and 8.5.2 can be called with just functions after setup and save",
+    "ts": 1795503972322
+  },
+  {
+    "id": "mwukjdyf8qvs",
+    "text": "Added mw-compare.hmtl. To use, run and save (8.5.2) and (8.5.3) using (8.3.2) - updated to not have a mw_macro check so cmds needing it will be saved. The new helper page can view/add/edit/delete/reorder the commands. To edit a command, Tap the L or R label on a command. Others should be self explanatory I hope",
+    "ts": 1795517127017
   }
 ]
