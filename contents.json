@@ -396,7 +396,7 @@
     "label": "misc (local) Hide UI by tapping hunger badge | TAP ANYWHERE TO SHOW| FOR CLEAN SCREENSHOTS"
   },
   {
-    "text": "local P=ThePlayer local H=P.HUD.leafcanopy local C=TheCamera local b=P.HUD.controls.status.heart b._mwloc=b._mwloc or b.OnControl P._mwshot=false b.OnControl=function(s,c,d) if (c==CONTROL_ACCEPT or c==CONTROL_PRIMARY) and not d then if not P._mwshot then P._mwshot=true P._mwshotold={C.maxdist,C.distancetarget} H:Hide() C:SetMaxDistance(120) C:SetDistance(120) else P._mwshot=false H:Show() C:SetMaxDistance(P._mwshotold[1]) C:SetDistance(P._mwshotold[2]) P._mwshotold=nil end return true end return s._mwloc(s,c,d) end --M",
+    "text": "local P=ThePlayer local H=P.HUD.leafcanopy local C=TheCamera local b=P.HUD.controls.status.heart b._mwloc=b._mwloc or b.OnControl b.OnControl=function(s,c,d) if (c==CONTROL_ACCEPT or c==CONTROL_PRIMARY) and not d then P._mwleafoff=not P._mwleafoff if P._mwleafoff then PLAYER_CAMERA_SEE_DISTANCE=130 PLAYER_CAMERA_SEE_DISTANCE_SQ=16900 C:SetExtraMaxDistance(80) C:ContinuousZoomDelta(130-C.distancetarget) H:Hide() P:DoTaskInTime(.3,function() if P:IsValid() and P._mwleafoff then C:ContinuousZoomDelta(-10) end end) else C:SetExtraMaxDistance(0) C:ContinuousZoomDelta(41.25-C.distancetarget) PLAYER_CAMERA_SEE_DISTANCE=40 PLAYER_CAMERA_SEE_DISTANCE_SQ=1600 H:Show() end return true end return s._mwloc(s,c,d) end --M",
     "label": "MISC (LOCAL) ZOOM OUT FURTHER AND HIDE LEAF OVERLAY BY TAPPING HEART BADGE"
   },
   {
