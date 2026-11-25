@@ -146,7 +146,22 @@
   },
   {
     "id": "mwukjdyf8qvs",
-    "text": "Added mw-compare.hmtl. To use, run and save (8.5.2) and (8.5.3) using (8.3.2) - updated to not have a mw_macro check so cmds needing it will be saved. The new helper page can view/add/edit/delete/reorder the commands. To edit a command, Tap the L or R label on a command. Others should be self explanatory I hope",
+    "text": "Added mw-compare.html. To use, run and save (8.5.2) and (8.5.3) using (8.3.2) - updated to not have a mw_macro check so cmds needing it will be saved. The new helper page can view/add/edit/delete/reorder the commands. To edit a command, Tap the L or R label on a command. Others should be self explanatory I hope",
     "ts": 1795517127017
+  },
+  {
+    "id": "mwumb1g1qctg",
+    "text": "Updated (8.2) Runner to report skipped lines and total",
+    "ts": 1795520096789
+  },
+  {
+    "id": "mwvs17qkut97",
+    "text": "Added (MISC) Hide UI by tapping hunger badge. Tap anywhere to undhide, this is for screenshots",
+    "ts": 1795590182254
+  },
+  {
+    "id": "mwvsr0kcgsm8",
+    "text": "Added (MISC) Zoom out further and remove leaf overlay, tap the heart badge to toggle. Happy little accidents by accidental taps is not my fault. You can probably change the max camera distance by increasing 120 to whether but don't if your device is old like mine. The initial zoom out every fresh load is plagued with clouds, zoom back in a bit. Like the other new misc, this is inteded for screenshots, like a megabase you made",
+    "ts": 1795591386015
   }
 ]

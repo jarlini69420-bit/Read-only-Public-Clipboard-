@@ -52,7 +52,7 @@
     "label": "8.1 (Local) Saves all commands tagged with --M into a persistent string so we no longer need it saved in console history"
   },
   {
-    "text": "TheSim:GetPersistentString([[mw_macro]],function(ok,s) if not ok then Networking_SystemMessage([[no saved macro]]) return end local n=0 local me=[[,]]..ThePlayer.prefab..[[,]] for l in s:gmatch(([[[^]]..string.char(10)..[[]+]])) do local c=l:sub(2) local t=c:match([[^@([%w_,]+)|]]) if t then c=c:sub(#t+3) end if not t or ([[,]]..t..[[,]]):find(me,1,true) then n=n+1 local o,e=pcall(function() if l:sub(1,1)==[[R]] then local x,_,z=TheSim:ProjectScreenPos(TheSim:GetPosition()) TheNet:SendRemoteExecute(c,x,z) else ExecuteConsoleCommand(c) end end) if not o then Networking_SystemMessage([[MWRUN: ]]..tostring(e)) end end end Networking_SystemMessage([[MWRUN ran ]]..n) end) --RUN",
+    "text": "TheSim:GetPersistentString([[mw_macro]],function(ok,s) if not ok then Networking_SystemMessage([[no saved macro]]) return end local n,sk=0,0 local me=[[,]]..ThePlayer.prefab..[[,]] for l in s:gmatch(([[[^]]..string.char(10)..[[]+]])) do local c=l:sub(2) local t=c:match([[^@([%w_,]+)|]]) if t then c=c:sub(#t+3) end if not t or ([[,]]..t..[[,]]):find(me,1,true) then n=n+1 local o,e=pcall(function() if l:sub(1,1)==[[R]] then local x,_,z=TheSim:ProjectScreenPos(TheSim:GetPosition()) TheNet:SendRemoteExecute(c,x,z) else ExecuteConsoleCommand(c) end end) if not o then Networking_SystemMessage([[MWRUN: ]]..tostring(e)) end else sk=sk+1 end end Networking_SystemMessage([[MWRUN complete: ]]..n..[[ executed, ]]..sk..[[ skipped by character filter, ]]..(n+sk)..[[ total lines]]) end) --RUN",
     "label": "8.2 (Local) Runs all commands saved in the persistent string (#5 is no longer needed)"
   },
   {
@@ -205,7 +205,7 @@
   },
   {
     "text": "rawset(_G,[[MW_DX]],false); function MW_Dn(id) local Z=Networking_SystemMessage if type(id)~=[[string]] or id==[[]] then Z([[provide paste ID]]) return end TheSim:QueryServer([[https://freepastebin.com/raw/]]..id,function(r,ok,c) if not ok or c~=200 or type(r)~=[[string]] then Z([[download failed ]]..tostring(c)) return end if not r:match([=[^[LR]]=]) then Z([[invalid macro data]]) return end MW_DX=r Z([[downloaded ]]..#r..[[ chars, code ]]..MW_Ck(r)..[[. MW_Go() applies; old macro will be backed up]]) end) end --M",
-    "label": "8.5.3.1 (Local) Download and update you macro | You can still restore | Read the instructions on compare html carefully | two function calls in the html"
+    "label": "8.5.3.1 (Local) Download and update your macro | You can still restore | Read the instructions on compare html carefully | two function calls in the html"
   },
   {
     "text": "local D={67} TheSim:GetPersistentString([[mw_macro]],function(ok,s) if not ok or not s then return end TheSim:SetPersistentString([[mw_macro_bak]],s,false) local P=[[[^]]..string.char(10)..[[]+]] local L,X,O={},{},{} for l in s:gmatch(P) do L[#L+1]=l end for _,d in ipairs(D) do local a,b=tostring(d):match([[(%d+)-?(%d*)]]) a=tonumber(a) b=tonumber(b) or a if a then for i=a,b do X[i]=true end end end for i,l in ipairs(L) do if not X[i] then O[#O+1]=l end end TheSim:SetPersistentString([[mw_macro]],table.concat(O,string.char(10)),false) Networking_SystemMessage([[mw_macro: ]]..#L..[[ -> ]]..#O..[[ lines, backup saved]]) end) --RUN",
@@ -390,6 +390,14 @@
   {
     "text": "local IB=require[[widgets/imagebutton]] local CS=require[[screens/consolescreen_mobile]] local r=ThePlayer.HUD.controls local W,H=TheSim:GetScreenSize() local k=r:GetScale().x local w=r:GetWorldPosition() if r.MW_cb then r.MW_cb:Kill() end local b=r:AddChild(IB([[images/global.xml]],[[square.tex]],[[square.tex]],[[square.tex]])) r.MW_cb=b b:SetScale(.9) b.image:SetTint(1,1,1,.02) b:SetPosition((W-0.1073*H-w.x)/k,(H-0.0537*H-w.y)/k) b:SetOnClick(function() local a=TheFrontEnd:GetActiveScreen() if a and a.name==[[ConsoleScreen]] then return end TheFrontEnd:PushScreen(CS()) end) --M",
     "label": "MISC (LOCAL) ONE TAP OPEN CONSOLE | requires manual position over day clock"
+  },
+  {
+    "text": "local P=ThePlayer local C=P.HUD.controls local b=C.status.stomach b._mwoc=b._mwoc or b.OnControl P._mwh=function() if P._mwhide then return end P._mwhide=true local F=TheFrontEnd P._mwold=F.OnControl F.OnControl=function(self,c,d,...) if d then F.OnControl=P._mwold P._mwold=nil P._mwhide=nil if P.HUD then P.HUD:Show() end return end return P._mwold(self,c,d,...) end P.HUD:Hide() end b.OnControl=function(s,c,d) if (c==CONTROL_ACCEPT or c==CONTROL_PRIMARY) and not d then P._mwh() return true end return s._mwoc(s,c,d) end --M",
+    "label": "misc (local) Hide UI by tapping hunger badge | TAP ANYWHERE TO SHOW| FOR CLEAN SCREENSHOTS"
+  },
+  {
+    "text": "local P=ThePlayer local H=P.HUD.leafcanopy local C=TheCamera local b=P.HUD.controls.status.heart b._mwloc=b._mwloc or b.OnControl P._mwshot=false b.OnControl=function(s,c,d) if (c==CONTROL_ACCEPT or c==CONTROL_PRIMARY) and not d then if not P._mwshot then P._mwshot=true P._mwshotold={C.maxdist,C.distancetarget} H:Hide() C:SetMaxDistance(120) C:SetDistance(120) else P._mwshot=false H:Show() C:SetMaxDistance(P._mwshotold[1]) C:SetDistance(P._mwshotold[2]) P._mwshotold=nil end return true end return s._mwloc(s,c,d) end --M",
+    "label": "MISC (LOCAL) ZOOM OUT FURTHER AND HIDE LEAF OVERLAY BY TAPPING HEART BADGE"
   },
   {
     "text": "local function P(i) if i.MW_inf then return end i.MW_inf=1 i.TurnOffMachine=function(i) if i.components.machine:IsOn() then local s=i:GetRecordSong() if s and not i.SoundEmitter:PlayingSound([[ragtime]]) then i.SoundEmitter:PlaySound(s,[[ragtime]]) end i._stop_song_task=i:DoTaskInTime(TUNING.PHONOGRAPH_PLAY_TIME,i.TurnOffMachine) end end if i._stop_song_task then i._stop_song_task:Cancel() i._stop_song_task=nil end if i.components.machine:IsOn() then i._stop_song_task=i:DoTaskInTime(TUNING.PHONOGRAPH_PLAY_TIME,i.TurnOffMachine) end end local function S() for _,e in pairs(Ents) do if e.prefab==[[phonograph]] and e.components.machine then P(e) end end end if TheWorld.MW_pg then TheWorld.MW_pg:Cancel() end TheWorld.MW_pg=TheWorld:DoPeriodicTask(5,S) S() --M",
