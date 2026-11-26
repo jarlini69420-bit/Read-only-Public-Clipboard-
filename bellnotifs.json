@@ -165,18 +165,18 @@
     "ts": 1795591386015
   },
   {
-    "id": "mww1pt3ge7ru",
-    "text": "Update (MISC) Zoom out, just sped up (zoom in) and simulate pull back (zoom out). Eh works well enough",
-    "ts": 1795606446228
-  },
-  {
-    "id": "mwwu90eqv2t9",
-    "text": "Added (36) WX Transport Drone arrival notifications, auto deletes old notifs if its within a min timespan and increments the new notif",
-    "ts": 1795654371411
-  },
-  {
     "id": "mwwu9m05hu3y",
     "text": "Added (37) Wurt Shut up merm follower talker. No more mermfolk spam",
     "ts": 1795654399397
+  },
+  {
+    "id": "mwwzzpdv8x08",
+    "text": "Merged (35) WX Drones notifications to chat. The icon wasn't noticable anyway and would add to clutter it made opaque",
+    "ts": 1795664014918
+  },
+  {
+    "id": "mwx1uv7310v7",
+    "text": "Fixed (MISC) ZoomOut++ to dynamic CameraDistances to not brick WX Rangebooster and other possible camera altering features",
+    "ts": 1795667148403
   }
 ]
