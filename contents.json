@@ -137,7 +137,7 @@
   },
   {
     "text": "local n,k=0,0 for _,v in pairs(Ents) do local s=v.prefab and v.prefab:sub(1,4)==[[merm]] and v.components.homeseeker if s and not v:IsInLimbo() then local h=s.home local f=v.components.follower if f and f:GetLeader() then elseif h and h:IsValid() then if v:GetDistanceSqToInst(h)>225 then local x,_,z=h.Transform:GetWorldPosition() if v.Physics then v.Physics:Teleport(x+2.5,0,z) else v.Transform:SetPosition(x+2.5,0,z) end n=n+1 end else k=k+1 end end end c_announce([[merms moved ]]..n..[[, no home ]]..k)",
-    "label": "Misc (Remote) TP All Stranded Merms back to their homes | Highly recommended for Caves"
+    "label": "Misc (Remote) Wurt TP All Stranded Merms back to their homes | Highly recommended for Caves"
   },
   {
     "text": "local P=ThePlayer for _,r in ipairs(P.HUD.controls.networkchatqueue.widget_rows) do if r.cb then r.cb:Kill() r.cb=nil end end local C=require[[screens/chatinputscreen]] if not C.tl then C.tl=C.OnBecomeActive C.OnBecomeActive=function(s,...) C.tl(s,...) for _,r in ipairs(s.networkchatqueue.widget_rows) do if not r.cb then local b=r.root:AddChild(require[[widgets/imagebutton]]()) r.cb=b b:SetImageNormalColour(0,0,0,0) b:SetImageFocusColour(0,0,0,0) b:ForceImageSize(690,32) b:SetPosition(305,0) b:SetOnClick(function() local d=ChatHistory:GetChatMessageAtIndex(r.history_index) local m=d and d.message local V=rawget(_G,[[VisitURL]]) if m and V then pcall(V,[[https://translate.google.com/?sl=auto&tl=en&op=translate&text=]]..m:gsub([[[^%w]]],function(c) return([[%%%02X]]):format(c:byte()) end),true) else pcall(function() P.components.talker:Say(m and[[no VisitURL]]or[[no msg]],1) end) end end) end end end end --M",
@@ -446,6 +446,18 @@
   {
     "text": "function MW_DnU() local g=ThePlayer.HUD.controls.mwdg if not g then return end local a=MW_DA if MW_DN>0 then g.i:SetTint(1,1,1,a) g.c:SetTint(.1,.4,.15,.9*a) g.t:SetColour(1,1,1,a) if MW_DN>1 then g.c:Show() g.t:Show() else g.c:Hide() g.t:Hide() end g:Show() else g:Hide() end end local P=ThePlayer if P._mwdt then P._mwdt:Cancel() end P._mwdt=P:DoPeriodicTask(.25,function() local o,e=pcall(function() MW_DnS() MW_DnU() end) if not o and not P._mwde then P._mwde=1 Networking_SystemMessage([[drone: ]]..tostring(e)) end end) --M:wx78",
     "label": "35.4 WX Scout drone icon when idle (4/4)"
+  },
+  {
+    "text": "rawset(_G,[[MW_TDM]],false) rawset(_G,[[MW_TDN]],0) rawset(_G,[[MW_TDL]],-999) rawset(_G,[[MW_TDW]],60) rawset(_G,[[MW_TdArr]],function() local now=GetTime() local m=MW_TDM local H=ChatHistory local k if m and now-MW_TDL<=MW_TDW then for i=1,100 do if H:GetChatMessageAtIndex(i)==m then k=i break end end end MW_TDL=now if k then for i=k,99 do local a=H.history_start-i+1 if a<1 then a=a+100 end local b=a-1 if b<1 then b=b+100 end H.history[a]=H.history[b] end local a=H.history_start-99 if a<1 then a=a+100 end H.history[a]=nil MW_TDN=MW_TDN+1 else MW_TDN=1 end MW_TDM=H:AddToHistory(ChatTypes.SystemMessage,nil,nil,nil,[[A transport drone has arrived (]]..MW_TDN..[[)]],{.7,.85,1,1},nil,nil,true) local s=TheFrontEnd:GetActiveScreen() local q=s and s.networkchatqueue if q then q:RefreshWidgets(true) end end) --M:wx78",
+    "label": "36.1 (LOCAL) WX TRANSPORT DRONE CHAT NOTIFICATION (1/2)"
+  },
+  {
+    "text": "rawset(_G,[[MW_TDS]],{}) rawset(_G,[[MW_TDY]],0) local P=ThePlayer if P._mwtd then P._mwtd:Cancel() end P._mwtd=P:DoPeriodicTask(.5,function() local o,e=pcall(function() MW_TDY=MW_TDY-.5 if MW_TDY<=0 then MW_TDY=2 for _,x in pairs(Ents) do local p=x.prefab if p and MW_TDS[x]==nil and x:IsValid() and (p==[[wx78_drone_delivery_small]] or p:find([[^wx78_drone_delivery.*_globalicon$]])) then MW_TDS[x]=true end end end for x in pairs(MW_TDS) do if not x:IsValid() then MW_TDS[x]=nil MW_TdArr() end end end) if not o and not P._mwtde then P._mwtde=1 Networking_SystemMessage([[drone arrive: ]]..tostring(e)) end end) --M:wx78",
+    "label": "36.2 (local) WX TRANSPORT DRONE (2/2) | THE CMD DELETES OLDER  TRANSPORT DRONE NOTIFICATIONS AND INCREMENTS THE COUNT OF ITS WITHIN A MINUTE TIME FRAME"
+  },
+  {
+    "text": "local P=ThePlayer local function M(v) if v and v:IsValid() and v.prefab and v.prefab:sub(1,4)==[[merm]] and v.components.talker then v.components.talker:IgnoreAll() v.components.talker:ShutUp() return 1 end return 0 end if not P._mwMermHook then P._mwMermOld=P.additional_OnFollowerAdded P.additional_OnFollowerAdded=function(inst,v) if inst._mwMermOld then inst._mwMermOld(inst,v) end M(v) end P._mwMermHook=true end local n=0 for v in pairs(P.components.leader.followers) do n=n+M(v) end c_announce([[Merm silence active: ]]..n..[[ existing followers silenced; new followers automatic]]) --M:wurt",
+    "label": "37 (remote) WURT MAKE YOUR MERM FOLLOWERS STOP TALKING"
   },
   {
     "text": "Hey! I need help adjusting the coordinate values for a custom Don't Starve Together mobile console command. Because of my device's resolution and HUD scale, the virtual buttons/UI elements created by this script aren't aligning correctly with my screen. Here is my current one-liner command: [PASTE YOUR FULL COMMAND STRING HERE] I’ve attached a screenshot of my DST mobile game in-case you need to reference the layout. Can you calculate the math for the new positions/sizes and rewrite this into an updated, single-line command string that I can copy and paste directly into the game console?",
