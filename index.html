@@ -141,22 +141,15 @@ body {
 .clip-label .mode.remote { color: var(--green); border-color: rgba(74,222,128,.35); }
 
 .clip-text-details {
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--code-bg);
-  overflow: hidden;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--code-bg); overflow: hidden;
 }
-.clip-text-details > summary {
-  list-style: none; cursor: pointer; padding: 7px 10px;
-  display: flex; align-items: center; gap: 6px; min-width: 0;
-  user-select: none;
+.clip-text-head { display:flex; align-items:center; gap:6px; min-width:0; padding:7px 10px; }
+.clip-text-toggle {
+  flex:0 0 auto; border:0; background:transparent; color:var(--text-muted);
+  padding:2px 3px; font-size:12px; line-height:1; cursor:pointer;
 }
-.clip-text-details > summary::-webkit-details-marker { display: none; }
-.clip-text-details > summary::before {
-  content: "▸"; flex: 0 0 auto; color: var(--text-muted); font-size: 11px;
-  transition: transform 0.12s;
-}
-.clip-text-details[open] > summary::before { transform: rotate(90deg); }
+.clip-text-toggle:focus-visible { outline:1px solid var(--text-accent); border-radius:3px; }
 .clip-text-one {
   min-width: 0; flex: 1 1 auto;
   font: 12px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -711,20 +704,35 @@ function oneLine(text) {
 }
 
 function makeCodeBlock(text, oneClass, fullClass, detailsClass) {
-  const d = document.createElement('details');
-  d.className = detailsClass;
-  const sum = document.createElement('summary');
+  const wrap = document.createElement('div');
+  wrap.className = detailsClass;
+  const head = document.createElement('div');
+  head.className = 'clip-text-head';
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'clip-text-toggle';
+  toggle.textContent = '▸';
+  toggle.title = 'Expand code';
+  toggle.setAttribute('aria-expanded', 'false');
   const one = document.createElement('span');
   one.className = oneClass;
   one.textContent = oneLine(text) || '(empty)';
-  sum.appendChild(one);
   const full = document.createElement('pre');
   full.className = fullClass;
   full.textContent = text || '';
-  d.append(sum, full);
-  // expanding code should not trigger card/part copy
-  d.addEventListener('click', e => e.stopPropagation());
-  return d;
+  full.hidden = true;
+  toggle.addEventListener('click', e => {
+    e.stopPropagation();
+    const open = !wrap.classList.contains('expanded');
+    wrap.classList.toggle('expanded', open);
+    full.hidden = !open;
+    toggle.textContent = open ? '▾' : '▸';
+    toggle.title = open ? 'Collapse code' : 'Expand code';
+    toggle.setAttribute('aria-expanded', String(open));
+  });
+  head.append(toggle, one);
+  wrap.append(head, full);
+  return wrap;
 }
 
 function appendUpdates(card, clip) {

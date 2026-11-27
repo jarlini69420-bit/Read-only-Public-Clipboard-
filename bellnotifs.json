@@ -198,5 +198,10 @@
     "id": "mwy7pvkc8wy0",
     "text": "Updated clipboard to not stretch single cards on bigger screens on iPads and tablets but now there's empty spaces",
     "ts": 1795737459468
+  },
+  {
+    "id": "mwydvxa9umg7",
+    "text": "Unified the single-card and multipart code expanders. Tap the smol arrow in the code block to expand. But you don't have to look at it yk. just tap to copy and run",
+    "ts": 1795747819329
   }
 ]
