@@ -59,6 +59,8 @@ table.results tr:last-child td{border-bottom:0}
 .colcmd{width:112px;white-space:nowrap}
 .showcmd{display:inline-block;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:5px 8px;font:600 12px system-ui;cursor:pointer}
 .cmdview{margin-top:6px;max-width:min(70vw,520px)}
+table.results tr.cmdrow td.cmdcell{padding:0 8px 10px;background:var(--card)}
+tr.cmdrow .cmdview{max-width:none;margin:0 0 6px;white-space:pre-wrap;overflow-wrap:anywhere;overflow-x:visible}
 .result-hit{color:var(--ok)}.result-changed{color:var(--warn)}.result-miss{color:var(--bad)}.result-none{color:var(--mut)}
 .result-main{display:block}
 .stb{display:inline-block;font:700 11px/1 system-ui;letter-spacing:.04em;border-radius:5px;padding:3px 6px;margin-right:7px;vertical-align:1px;color:#fff}
@@ -74,7 +76,8 @@ table.results tr:last-child td{border-bottom:0}
   table.results td{display:block;padding:0;border:0}
   table.results td.colno{grid-column:1;width:auto}
   table.results td.colresult{grid-column:2;min-width:0}
-  table.results td.colcmd,table.results td.colact{grid-column:1 / -1;width:auto}
+  table.results td.colcmd,table.results td.colact,table.results td.cmdcell{grid-column:1 / -1;width:auto}
+  table.results tr.cmdrow{grid-template-columns:1fr;margin-top:-4px;padding-top:0}
   .cmdview{max-width:100%}
   .colact button{margin-bottom:4px}
 }
@@ -137,7 +140,8 @@ table.results tr:last-child td{border-bottom:0}
 <script>
 (function(){
 "use strict";
-var DEFAULT_URL="https://raw.githubusercontent.com/jarlini69420-bit/Read-only-Public-Clipboard-/a5f49c6f9a8824d46ea8688ad22dcb4aa4ba8a03/contents.json";
+var OLD_PINNED="https://raw.githubusercontent.com/jarlini69420-bit/Read-only-Public-Clipboard-/a5f49c6f9a8824d46ea8688ad22dcb4aa4ba8a03/contents.json";
+var DEFAULT_URL="https://raw.githubusercontent.com/jarlini69420-bit/Read-only-Public-Clipboard-/main/contents.json";
 var $=function(id){return document.getElementById(id);};
 var state={header:"",lines:[],index:null,hist:[],report:"",f:{},q:"",shown:false,dlg:null,R:null};
 var HDR=/^KLEI\s+\d+\s*\*?/;
@@ -264,6 +268,7 @@ function visible(R){
 function actBtn(txt,title,fn,dis){var b=el("button","sec mini",txt);b.title=title;b.setAttribute("aria-label",title);b.disabled=!!dis;b.addEventListener("click",function(e){e.stopPropagation();fn();});return b;}
 
 function render(){
+  var keepY=window.pageYOffset||0;
   var R=state.R=compare(),out=$("out");out.textContent="";
   $("tools").hidden=false;$("savecard").hidden=false;
   var sum=el("div","card sum");
@@ -290,8 +295,16 @@ function render(){
     main.appendChild(document.createTextNode(txt));
     result.appendChild(main);
     var sub=el("span","sub",m.len+" chars"+(m.tag?"  ·  @"+m.tag:"")+(m.dup?"  ·  DUPLICATE":"")+(m.glued?"  ·  "+(m.glued+1)+" COMMANDS GLUED TOGETHER (missing line break)":"")+(m.mode==="R"?"  ·  remote":"")+(m.hit&&m.hit[0].mode&&m.hit[0].mode!==m.mode?"  ·  MODE DIFFERS (index: "+(m.hit[0].mode==="R"?"remote":"local")+")":""));result.appendChild(sub);
-    var details=el("details"),summary=el("summary","showcmd","Show command");details.appendChild(summary);details.appendChild(el("pre","cmdview",m.text));
-    if(m.near)details.appendChild(el("pre","cmdview","INDEX ("+m.near.ref+" "+m.near.label+", "+m.cp+" chars identical at the start, "+m.cs+" at the end):\n"+m.near.text));
+    var details=el("details"),summary=el("summary","showcmd","Show command"),full=null;details.appendChild(summary);
+    /* opening adds a full-width row under this one; closing removes it */
+    details.addEventListener("toggle",function(){
+      if(details.open){
+        full=el("tr","cmdrow");var td=el("td","cmdcell");td.colSpan=4;
+        td.appendChild(el("pre","cmdview",m.text));
+        if(m.near)td.appendChild(el("pre","cmdview","INDEX ("+m.near.ref+" "+m.near.label+", "+m.cp+" chars identical at the start, "+m.cs+" at the end):\n"+m.near.text));
+        full.appendChild(td);row.parentNode.insertBefore(full,row.nextSibling);
+      }else if(full){if(full.parentNode)full.parentNode.removeChild(full);full=null;}
+    });
     cmd.appendChild(details);
     var can=!filtering;
     act.appendChild(actBtn("↑","Move up",function(){move(m.no-1,m.no-2);},!can||m.no===1));
@@ -320,6 +333,7 @@ function render(){
   lines.push("line | result | command");
   R.M.forEach(function(m){var v=m.hit?"HIT: "+m.hit.map(function(e){return e.label;}).join(", "):m.near?"CHANGED: "+m.near.label:m.st==="miss"?"MISS: "+missName(m):"-";lines.push(m.no+" | "+v+" | "+m.text);});
   state.report=lines.join("\n");$("rep").disabled=false;
+  if(keepY)window.scrollTo(0,keepY);
 }
 
 /* ---------- editing ---------- */
@@ -364,15 +378,28 @@ function loadText(txt){var p=splitText(txt);state.header=p.header;state.lines=p.
 
 var runTok=0,loadedId="";
 function validPaste(){var v=$("paste").value.trim();if(/freepastebin\.com\/(?:raw\/)?[A-Za-z0-9_-]{6,}/i.test(v))return true;return /^[A-Za-z0-9_-]{8,}$/.test(v);}
+/* A raw.githubusercontent URL whose ref is a branch (main, master...) is turned into the newest
+   commit first, so a fresh push is used right away instead of waiting out GitHub's raw cache.
+   A URL pinned to a 40-character commit is left alone, and any failure falls back to the URL as typed. */
+function resolveLatest(u){
+  var m=u.match(/^https:\/\/raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/([^\/]+)\/(.+)$/);
+  if(!m||/^[0-9a-f]{40}$/i.test(m[3]))return Promise.resolve({url:u});
+  return fetch("https://api.github.com/repos/"+m[1]+"/"+m[2]+"/commits/"+encodeURIComponent(m[3]),{cache:"no-store"})
+    .then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})
+    .then(function(j){if(!j||!/^[0-9a-f]{40}$/i.test(j.sha||""))throw new Error("no sha");
+      return {url:"https://raw.githubusercontent.com/"+m[1]+"/"+m[2]+"/"+j.sha+"/"+m[4],sha:j.sha};})
+    .catch(function(){return {url:u};});
+}
 function ensureIndex(force){
   var u=$("idxurl").value.trim();
   if(!u){setSt("idxst","enter a URL","bad");return Promise.reject(new Error("no index URL"));}
-  if(state.index&&state.indexUrl===u&&!force)return Promise.resolve();
+  if(state.index&&state.indexUrl===u&&!force&&Date.now()-(state.indexAt||0)<60000)return Promise.resolve();
   store("mwc_url",u);setSt("idxst","fetching...");
-  return fetchText(u).then(function(txt){
-    state.index=parseIndex(JSON.parse(txt));state.indexUrl=u;
-    var clips={};state.index.forEach(function(e){clips[e.ref.split(".")[0]]=1;});
-    setSt("idxst",Object.keys(clips).length+" clips, "+state.index.length+" parts","ok");
+  var got={};
+  return resolveLatest(u).then(function(r){got=r;return fetchText(r.url);}).then(function(txt){
+    state.index=parseIndex(JSON.parse(txt));state.indexUrl=u;state.indexAt=Date.now();
+    var clips={};state.index.forEach(function(e){clips[e.ref.split(".")[0]+"|"+e.clip]=1;});
+    setSt("idxst",Object.keys(clips).length+" clips, "+state.index.length+" parts"+(got.sha?"  ·  commit "+got.sha.slice(0,7):""),"ok");
   }).catch(function(e){setSt("idxst","failed: "+e.message,"bad");throw e;});
 }
 /* paste -> index -> compare, in that order */
@@ -436,7 +463,7 @@ var pasteParam=(qp&&qp.get("paste"))||"";
 $("paste").value=pasteParam||recall("mwc_paste");
 renderUploadHistory();
 if(pasteParam)store("mwc_paste",pasteParam);
-$("idxurl").value=(qp&&qp.get("u"))||recall("mwc_url")||DEFAULT_URL;
+$("idxurl").value=(qp&&qp.get("u"))||(recall("mwc_url")!==OLD_PINNED&&recall("mwc_url"))||DEFAULT_URL;
 if(validPaste())autoRun(true);else ensureIndex(false).catch(function(){});
 window.__mwc={norm:norm,splitText:splitText,compare:compare,check:check,state:state};
 })();
