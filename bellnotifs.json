@@ -125,11 +125,6 @@
     "ts": 1795212428526
   },
   {
-    "id": "mwpllqciufmq",
-    "text": "Looks like (8.5) chat lister's char count is wrong but it does list the mode(local L or remote R) and a function next to it. For  this autohitch update, you can just find and delete 21.2s old cmd then run and save the new one if you like",
-    "ts": 1795216585125
-  },
-  {
     "id": "mwqzjkjxnjaq",
     "text": "Added (35) WX Scout drone icon when  one or both (shows 2)  are done exploring/idle",
     "ts": 1795300465103
@@ -178,5 +173,30 @@
     "id": "mwx1uv7310v7",
     "text": "Fixed (MISC) ZoomOut++ to dynamic CameraDistances to not brick WX Rangebooster and other possible camera altering features",
     "ts": 1795667148403
+  },
+  {
+    "id": "mwxm2mw0zkyp",
+    "text": "Clipboard Update to make the multipart commands easier to run. By the way, try the glorious new updates' CONSOLE PASTE BUTTON. We eating good folks! Thank the devs by rating the game and leave a polite review. They also fixed the curly brackets. The paste button should remove one(two on android) tap action per command",
+    "ts": 1795701103200
+  },
+  {
+    "id": "mwxm5baats8g",
+    "text": "Updated JSON structure, reordered stuff and relabeled MISC and TEST SERVER cards to M# and T#. REMOVED old commands  lister and deleter in favor of (8.5)\n\nStructure changed for my test server editor page",
+    "ts": 1795701228130
+  },
+  {
+    "id": "mwxm9r3fi0hb",
+    "text": "Updated (8.5) compare html to auto fetch when valid input is in their fields. No longer requires compare to view your commands, HIT detection improvements and label fixes",
+    "ts": 1795701435243
+  },
+  {
+    "id": "mwy660hv4xgp",
+    "text": "Updated (22) Brightshade to avoid clashing with Fig tree cmd",
+    "ts": 1795734853123
+  },
+  {
+    "id": "mwy7pvkc8wy0",
+    "text": "Updated clipboard to not stretch single cards on bigger screens on iPads and tablets but now there's empty spaces",
+    "ts": 1795737459468
   }
 ]

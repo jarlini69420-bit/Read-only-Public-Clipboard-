@@ -61,6 +61,8 @@ table.results tr:last-child td{border-bottom:0}
 .cmdview{margin-top:6px;max-width:min(70vw,520px)}
 .result-hit{color:var(--ok)}.result-changed{color:var(--warn)}.result-miss{color:var(--bad)}.result-none{color:var(--mut)}
 .result-main{display:block}
+.stb{display:inline-block;font:700 11px/1 system-ui;letter-spacing:.04em;border-radius:5px;padding:3px 6px;margin-right:7px;vertical-align:1px;color:#fff}
+.stb.hit{background:var(--ok)}.stb.changed{background:var(--warn)}.stb.miss{background:var(--bad)}
 .sub{display:block;margin-top:3px;font-size:12px;color:var(--mut)}
 @media (max-width:720px){
   body{padding-left:8px;padding-right:8px}
@@ -85,17 +87,17 @@ table.results tr:last-child td{border-bottom:0}
   <h2>1. Macro from the device</h2>
   <label for="paste">FreePastebin paste ID or raw URL</label>
   <input type="text" id="paste" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="MB2pKYNVeuC- or https://freepastebin.com/raw/…">
-  <div class="row"><button id="getmac">Fetch paste</button></div>
+  <div class="row"><button id="getmac" class="sec">Re-fetch &amp; compare</button></div>
   <label for="mactext">or paste the macro text here</label>
   <textarea id="mactext" spellcheck="false" placeholder="one command per line, starting with L or R"></textarea>
   <div class="st" id="macst"></div>
 </div>
 
 <div class="card">
-  <h2>2. Clipboard index (contents.json)</h2>
+  <h2>2. Clipboard index (contents.json) - loads automatically</h2>
   <label for="idxurl">URL</label>
   <input type="text" id="idxurl" autocomplete="off" autocapitalize="off" spellcheck="false">
-  <div class="row"><button id="getidx" class="sec">Fetch index</button></div>
+  <div class="row"><button id="getidx" class="sec">Reload index</button></div>
   <div class="st" id="idxst"></div>
 </div>
 
@@ -118,7 +120,7 @@ table.results tr:last-child td{border-bottom:0}
   <div class="st" id="sendst"></div>
   <label for="dlid">New FreePastebin paste ID</label>
   <div class="row"><input type="text" id="dlid" readonly placeholder="Upload the edited macro first" style="flex:1;min-width:150px"><button id="cpid" class="sec" disabled>Copy ID</button><button id="cpcmd" class="sec" disabled>Copy MW_Dn</button><button id="cpgo" class="sec" disabled>Copy MW_Go()</button></div>
-  <div class="mut">Copy MW_Dn first; then Copy MW_Go() becomes available. In game, run MW_Dn([[ID]]), check the checksum, then run MW_Go() to apply. Your previous macro is saved as mw_macro_bak.</div>
+  <div class="mut">Copy MW_Dn first; then Copy MW_Go() becomes available. In game, switch the console to <b>Local</b> mode and run MW_Dn([[ID]]), check the checksum, then (still in <b>Local</b> mode) run MW_Go() to apply. Your previous macro is saved as mw_macro_bak.</div>
   <details style="margin-top:10px"><summary>Recent uploads on this browser</summary><div id="uphist" class="mut">No saved uploads yet.</div><button id="clearhist" class="sec mini" type="button">Clear upload history</button></details>
 </div>
 
@@ -153,7 +155,17 @@ function norm(s,isMacro){
   s=String(s==null?"":s).replace(HDR,"").replace(/^\s+/,"").replace(/\s+$/,"");
   if(isMacro){s=s.slice(1).replace(/^@[^|]+\|/,"");}
   s=s.replace(/SetPosition\s*\(\s*\((.*?)-w\.x\)\s*\/\s*k\s*,\s*\((.*?)-w\.y\)\s*\/\s*k\s*\)/g,"SetPosition((X-w.x)/k,(Y-w.y)/k)");
-  return s.replace(/\s*--M\S*\s*$/,"").replace(/\s*--RUN\s*$/,"").replace(/\s+$/,"");
+  s=s.replace(/\s*--M\S*\s*$/,"").replace(/\s*--RUN\s*$/,"").replace(/\s+$/,"");
+  return canon(s);
+}
+/* The index stores strings as [[x]] but the device macro comes back as "x", and the game
+   also rewrites a few other spellings. Bring both sides to one form before comparing. */
+function canon(s){
+  s=s.replace(/\[\[([^\]"\n]*)\]\]/g,'"$1"');                                   /* [[x]]  -> "x"      */
+  s=s.replace(/([^\w\]\)"'])\(("(?:[^"\\]|\\.)*")\)/g,"$1$2");                    /* ("x")  -> "x"      */
+  s=s.replace(/\brequire\s*\(\s*("[^"]*")\s*\)/g,"require$1");                      /* require("x") -> require"x" */
+  s=s.replace(/[^\x00-\x7f]+/g,function(ch){return Array.prototype.map.call(new TextEncoder().encode(ch),function(b){return "\\"+b;}).join("");}); /* ° -> \194\176 */
+  return s;
 }
 function splitText(txt){
   var ls=String(txt).replace(/\r/g,"").split("\n"),hdr="",out=[];
@@ -167,17 +179,35 @@ function splitText(txt){
 function parseLine(l,no){
   var mode=l.charAt(0),rest=l.slice(1),tag="",m=/^@([^|]+)\|/.exec(rest);
   if(m){tag=m[1];rest=rest.slice(m[0].length);}
-  return {no:no,raw:l,mode:mode,tag:tag,text:rest,len:rest.length,n:norm(l,true)};
+  var glued=0,re=/--(?:M|RUN)(?::[\w,]+)?/g,t=rest.replace(/\s+$/,""),g;while((g=re.exec(t))){if(g.index+g[0].length<t.length)glued++;}
+  return {no:no,raw:l,mode:mode,tag:tag,text:rest,len:rest.length,glued:glued,n:norm(l,true)};
 }
 function parseIndex(d){
-  var arr=Array.isArray(d)?d:(d&&Array.isArray(d.items)?d.items:(d&&Array.isArray(d.contents)?d.contents:(d&&typeof d==="object"?Object.keys(d).map(function(k){return d[k];}):[])));
-  return arr.map(function(c,i){
+  /* current structure: [{id,number,label,description?,parts:[{id,label,mode,text,placer}]}]
+     flat/legacy shapes still work (entries with text/script/content/cmd, or {items:[..]}) */
+  var arr=Array.isArray(d)?d:(d&&Array.isArray(d.items)?d.items:(d&&Array.isArray(d.contents)?d.contents:(d&&Array.isArray(d.clips)?d.clips:(d&&typeof d==="object"?Object.keys(d).map(function(k){return d[k];}):[]))));
+  var out=[];
+  arr.forEach(function(c,ci){
     var isO=c&&typeof c==="object";
-    var t=isO?(c.text||c.script||c.content||c.cmd||""):String(c);
-    var lb=isO?(c.label||c.title||c.name||String(i+1)):String(i+1);
-    return {i:i+1,label:String(lb),text:String(t),len:String(t).length,n:norm(t,false)};
+    var num=isO&&c.number!=null?String(c.number):String(ci+1);
+    var clip=isO?String(c.label||c.title||c.name||"Clip "+num):"Clip "+num;
+    var parts=isO&&Array.isArray(c.parts)?c.parts:null;
+    if(!parts){
+      var t=isO?(c.text||c.script||c.content||c.cmd||""):String(c);
+      parts=[{label:"",text:t,mode:c&&c.mode,placer:c&&c.placer}];
+    }
+    parts.forEach(function(p,pi){
+      var t=String(p&&p.text!=null?p.text:""),multi=parts.length>1;
+      var pl=p&&p.label?String(p.label):"";
+      var label=multi?(pl?clip+" › "+pl:clip+" › part "+(pi+1)):clip;
+      var mode=p&&p.mode?(/^r/i.test(p.mode)?"R":"L"):"";
+      out.push({i:out.length+1,ref:num+(multi?"."+(pi+1):""),clip:clip,part:pl,partNo:pi+1,parts:parts.length,
+        label:label,mode:mode,placer:!!(p&&p.placer),text:t,len:t.length,n:norm(t,false)});
+    });
   });
+  return out;
 }
+function suffixLen(a,b,skip){var n=Math.min(a.length,b.length)-skip,i=0;while(i<n&&a.charCodeAt(a.length-1-i)===b.charCodeAt(b.length-1-i))i++;return i;}
 function prefixLen(a,b){var n=Math.min(a.length,b.length),i=0;while(i<n&&a.charCodeAt(i)===b.charCodeAt(i))i++;return i;}
 
 function compare(){
@@ -191,9 +221,10 @@ function compare(){
     var h=m.n&&byN[m.n];
     if(h){m.st="hit";m.hit=h;h.forEach(function(e){usedX[e.i]=1;});cnt.hit++;return;}
     if(!state.index){m.st="none";return;}
-    var best=null,bl=0;
-    X.forEach(function(e){if(e.n.length<30||m.n.length<30)return;var p=prefixLen(m.n,e.n);if(p>bl){bl=p;best=e;}});
-    if(best&&bl>=40&&bl>=0.4*Math.min(m.n.length,best.n.length)){m.st="changed";m.near=best;m.cp=bl;usedX[best.i]=1;cnt.changed++;}
+    var best=null,bs=0,bp=0,bsu=0;
+    X.forEach(function(e){if(e.n.length<30||m.n.length<30)return;var p=prefixLen(m.n,e.n),su=suffixLen(m.n,e.n,p),sc=p+su;if(sc>bs){bs=sc;bp=p;bsu=su;best=e;}});
+    var mn=best?Math.min(m.n.length,best.n.length):0;
+    if(best&&((bp>=40&&bp>=0.4*mn)||(bs>=60&&bs>=0.6*mn))){m.st="changed";m.near=best;m.cp=bp;m.cs=bsu;usedX[best.i]=1;cnt.changed++;}
     else{m.st="miss";cnt.miss++;}
   });
   var onlyX=X.filter(function(e){return e.n&&!usedX[e.i];});
@@ -221,7 +252,7 @@ function missName(m){
 }
 
 /* ---------- rendering ---------- */
-var CHIPS=[["hit","Hit"],["changed","Changed"],["miss","No hit"],["dup","Duplicates"]];
+var CHIPS=[["hit","Hit"],["changed","Changed"],["miss","Miss"],["dup","Duplicates"]];
 function visible(R){
   var on=Object.keys(state.f).filter(function(k){return state.f[k];}),q=state.q.trim().toLowerCase();
   return R.M.filter(function(m){
@@ -236,7 +267,7 @@ function render(){
   var R=state.R=compare(),out=$("out");out.textContent="";
   $("tools").hidden=false;$("savecard").hidden=false;
   var sum=el("div","card sum");
-  [["macro lines",R.M.length,"ink"],["matched",R.cnt.hit,"ok"],["changed",R.cnt.changed,"warn"],["MISS",R.cnt.miss,"bad"],["only in index",R.onlyX.length,"acc"]].forEach(function(a){
+  [["MACRO LINES",R.M.length,"ink"],["HIT",R.cnt.hit,"ok"],["CHANGED",R.cnt.changed,"warn"],["MISS",R.cnt.miss,"bad"],["ONLY IN INDEX",R.onlyX.length,"acc"]].forEach(function(a){
     var p=el("span","pill");p.appendChild(el("b",null,String(a[1])+" "));p.appendChild(document.createTextNode(a[0]));p.style.color="var(--"+a[2]+")";sum.appendChild(p);
   });
   out.appendChild(sum);
@@ -250,15 +281,17 @@ function render(){
   rows.forEach(function(m){
     var row=el("tr"),no=el("td","colno",String(m.no)),result=el("td","colresult"),cmd=el("td","colcmd"),act=el("td","colact");
     var mb=el("button","modebtn",m.mode);mb.title="Edit line "+m.no;mb.addEventListener("click",function(){openDlg("edit",m);});no.appendChild(el("br"));no.appendChild(mb);
-    var main=el("span","result-main"),label;
-    if(m.hit){label=shortText(m.hit.map(function(e){return e.label;}).join(", "),20);result.className+=" result-hit";main.textContent="HIT · "+label;}
-    else if(m.near){label=shortText(m.near.label,20);result.className+=" result-changed";main.textContent="CHANGED · "+label;}
-    else if(m.st==="miss"){result.className+=" result-miss";main.textContent="NO HIT · "+missName(m);}
-    else{result.className+=" result-none";main.textContent=missName(m);}
+    var main=el("span","result-main"),badge,txt;
+    if(m.hit){result.className+=" result-hit";badge=el("span","stb hit","HIT");txt=m.hit.map(function(e){return e.label;}).join("  +  ");}
+    else if(m.near){result.className+=" result-changed";badge=el("span","stb changed","CHANGED");txt=m.near.label;}
+    else if(m.st==="miss"){result.className+=" result-miss";badge=el("span","stb miss","MISS");txt=missName(m);}
+    else{result.className+=" result-none";badge=null;txt=missName(m);}
+    if(badge)main.appendChild(badge);
+    main.appendChild(document.createTextNode(txt));
     result.appendChild(main);
-    var sub=el("span","sub",m.len+" chars"+(m.tag?"  ·  @"+m.tag:"")+(m.dup?"  ·  DUPLICATE":"")+(m.mode==="R"?"  ·  remote":""));result.appendChild(sub);
+    var sub=el("span","sub",m.len+" chars"+(m.tag?"  ·  @"+m.tag:"")+(m.dup?"  ·  DUPLICATE":"")+(m.glued?"  ·  "+(m.glued+1)+" COMMANDS GLUED TOGETHER (missing line break)":"")+(m.mode==="R"?"  ·  remote":"")+(m.hit&&m.hit[0].mode&&m.hit[0].mode!==m.mode?"  ·  MODE DIFFERS (index: "+(m.hit[0].mode==="R"?"remote":"local")+")":""));result.appendChild(sub);
     var details=el("details"),summary=el("summary","showcmd","Show command");details.appendChild(summary);details.appendChild(el("pre","cmdview",m.text));
-    if(m.near)details.appendChild(el("pre","cmdview","INDEX ("+m.near.label+", first "+m.cp+" chars identical):\n"+m.near.text));
+    if(m.near)details.appendChild(el("pre","cmdview","INDEX ("+m.near.ref+" "+m.near.label+", "+m.cp+" chars identical at the start, "+m.cs+" at the end):\n"+m.near.text));
     cmd.appendChild(details);
     var can=!filtering;
     act.appendChild(actBtn("↑","Move up",function(){move(m.no-1,m.no-2);},!can||m.no===1));
@@ -276,16 +309,16 @@ function render(){
   if(R.onlyX.length){
     io.hidden=false;var d=el("details");d.appendChild(el("summary",null,"In the index but not in your macro ("+R.onlyX.length+")"));
     R.onlyX.forEach(function(e){
-      var it=el("div","irow");it.appendChild(el("b",null,"#"+e.i));it.appendChild(el("span","t",shortText(e.label,40)));it.appendChild(el("span","mut",e.len+" chars"));
-      it.appendChild(actBtn("+ Add","Add to the end of the macro",function(){ins(state.lines.length,"L"+e.text+(/--M\S*\s*$/.test(e.text)?"":" --M"));}));
+      var it=el("div","irow");it.appendChild(el("b",null,"#"+e.ref));it.appendChild(el("span","t",e.label));it.appendChild(el("span","mut",e.len+" chars"));
+      it.appendChild(actBtn("+ Add","Add to the end of the macro",function(){ins(state.lines.length,(e.mode||"L")+e.text+(/--(?:M|RUN)\S*\s*$/.test(e.text)?"":" --M"));}));
       d.appendChild(it);
     });
     io.appendChild(d);
   }else io.hidden=true;
 
-  var lines=["macro lines "+R.M.length+", matched "+R.cnt.hit+", changed "+R.cnt.changed+", no hit "+R.cnt.miss+", only in index "+R.onlyX.length];
+  var lines=["MACRO LINES "+R.M.length+", HIT "+R.cnt.hit+", CHANGED "+R.cnt.changed+", MISS "+R.cnt.miss+", ONLY IN INDEX "+R.onlyX.length];
   lines.push("line | result | command");
-  R.M.forEach(function(m){var v=m.hit?"HIT: "+shortText(m.hit.map(function(e){return e.label;}).join(", "),20):m.near?"CHANGED: "+shortText(m.near.label,20):m.st==="miss"?"NO HIT: "+missName(m):"-";lines.push(m.no+" | "+v+" | "+m.text);});
+  R.M.forEach(function(m){var v=m.hit?"HIT: "+m.hit.map(function(e){return e.label;}).join(", "):m.near?"CHANGED: "+m.near.label:m.st==="miss"?"MISS: "+missName(m):"-";lines.push(m.no+" | "+v+" | "+m.text);});
   state.report=lines.join("\n");$("rep").disabled=false;
 }
 
@@ -329,25 +362,44 @@ function check(s){ /* same code the game prints: djb2 over the utf-8 bytes */
 function pasteId(){var v=$("paste").value.trim(),m=v.match(/freepastebin\.com\/(?:raw\/)?([A-Za-z0-9_-]+)/i);return (m?m[1]:v).replace(/[^A-Za-z0-9_-]/g,"");}
 function loadText(txt){var p=splitText(txt);state.header=p.header;state.lines=p.lines;state.hist=[];syncTA();}
 
-$("getmac").addEventListener("click",function(){
-  var id=pasteId();if(!id){setSt("macst","enter a FreePastebin paste ID or raw URL","bad");return;}
-  store("mwc_paste",id);setSt("macst","fetching paste...");
-  fetchText("https://freepastebin.com/raw/"+encodeURIComponent(id)).then(function(txt){
-    loadText(txt);setSt("macst","got paste "+id+", "+txt.length+" chars","ok");
-    if(state.shown)render();
-  }).catch(function(e){setSt("macst","failed: "+e.message,"bad");});
-});
-$("mactext").addEventListener("input",function(){var p=splitText($("mactext").value);state.header=p.header;state.lines=p.lines;if(state.shown)render();});
-$("getidx").addEventListener("click",function(){
-  var u=$("idxurl").value.trim();if(!u){setSt("idxst","enter a URL","bad");return;}
+var runTok=0,loadedId="";
+function validPaste(){var v=$("paste").value.trim();if(/freepastebin\.com\/(?:raw\/)?[A-Za-z0-9_-]{6,}/i.test(v))return true;return /^[A-Za-z0-9_-]{8,}$/.test(v);}
+function ensureIndex(force){
+  var u=$("idxurl").value.trim();
+  if(!u){setSt("idxst","enter a URL","bad");return Promise.reject(new Error("no index URL"));}
+  if(state.index&&state.indexUrl===u&&!force)return Promise.resolve();
   store("mwc_url",u);setSt("idxst","fetching...");
-  fetchText(u).then(function(txt){state.index=parseIndex(JSON.parse(txt));setSt("idxst",state.index.length+" index entries","ok");if(state.shown)render();})
-    .catch(function(e){setSt("idxst","failed: "+e.message,"bad");});
-});
+  return fetchText(u).then(function(txt){
+    state.index=parseIndex(JSON.parse(txt));state.indexUrl=u;
+    var clips={};state.index.forEach(function(e){clips[e.ref.split(".")[0]]=1;});
+    setSt("idxst",Object.keys(clips).length+" clips, "+state.index.length+" parts","ok");
+  }).catch(function(e){setSt("idxst","failed: "+e.message,"bad");throw e;});
+}
+/* paste -> index -> compare, in that order */
+function autoRun(force){
+  var id=pasteId();if(!id){setSt("macst","enter a FreePastebin paste ID or raw URL","bad");return;}
+  if(!force&&id===loadedId&&state.lines.length)return;
+  var tok=++runTok;store("mwc_paste",id);setSt("macst","fetching paste...");
+  fetchText("https://freepastebin.com/raw/"+encodeURIComponent(id)).then(function(txt){
+    if(tok!==runTok)return;
+    loadText(txt);loadedId=id;setSt("macst","got paste "+id+", "+txt.length+" chars","ok");
+    return ensureIndex(force).catch(function(){}).then(function(){
+      if(tok!==runTok)return;
+      if(state.lines.length){state.shown=true;render();}else setSt("macst","paste is empty","bad");
+    });
+  }).catch(function(e){if(tok===runTok)setSt("macst","failed: "+e.message,"bad");});
+}
+var pTimer=null;
+$("paste").addEventListener("input",function(){clearTimeout(pTimer);if(!validPaste())return;pTimer=setTimeout(function(){autoRun(false);},500);});
+$("paste").addEventListener("keydown",function(e){if(e.key==="Enter"){clearTimeout(pTimer);autoRun(true);}});
+$("getmac").addEventListener("click",function(){clearTimeout(pTimer);autoRun(true);});
+$("mactext").addEventListener("input",function(){var p=splitText($("mactext").value);state.header=p.header;state.lines=p.lines;if(state.shown)render();});
+$("getidx").addEventListener("click",function(){ensureIndex(true).then(function(){if(state.shown)render();}).catch(function(){});});
+$("idxurl").addEventListener("change",function(){ensureIndex(true).then(function(){if(state.shown)render();}).catch(function(){});});
 $("go").addEventListener("click",function(){
   var p=splitText($("mactext").value);state.header=p.header;state.lines=p.lines;
   if(!state.lines.length){setSt("macst","no macro text yet","bad");return;}
-  state.shown=true;render();
+  ensureIndex(false).catch(function(){}).then(function(){state.shown=true;render();});
 });
 $("rep").addEventListener("click",function(){copyTxt(state.report,$("rep"));});
 $("cpnum").addEventListener("click",function(){copyTxt(ranges(visible(state.R).map(function(m){return m.no;})).join(","),$("cpnum"));});
@@ -385,6 +437,7 @@ $("paste").value=pasteParam||recall("mwc_paste");
 renderUploadHistory();
 if(pasteParam)store("mwc_paste",pasteParam);
 $("idxurl").value=(qp&&qp.get("u"))||recall("mwc_url")||DEFAULT_URL;
+if(validPaste())autoRun(true);else ensureIndex(false).catch(function(){});
 window.__mwc={norm:norm,splitText:splitText,compare:compare,check:check,state:state};
 })();
 </script>
