@@ -3,7 +3,8 @@
 A lightweight, mobile-friendly web clipboard and companion toolset for **Don't Starve Together (DST) Mobile** Lua console commands—built to make copying, positioning, and pasting macros on mobile quick, ergonomic, and syntax-safe.
 
 * **Clipboard & Command Cards:** [Commands Clipboard](https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/)
-* **Button Placer (Experimental):** [Button Placer](https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/dst-button-placer)
+* **Button Placer:** [BTN Placer](https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/dst-button-placer)
+* **Macro Manager:** [Macro Compare](https://jarlini69420-bit.github.io/Read-only-Public-Clipboard-/mw-compare.html)
 * **YouTube Channel:** [@starvedSteve](https://www.youtube.com/@starvedSteve)
 
 ---
@@ -12,7 +13,8 @@ A lightweight, mobile-friendly web clipboard and companion toolset for **Don't S
 - **One-Tap Copy Cards:** Copy Lua console snippets straight to your clipboard without fighting mobile text-selection handles.
 - **Mobile Quote-Safe Formatting:** Uses Lua long brackets (`[[...]]`) so mobile autocorrect won't turn straight quotes into curly quotes and break syntax.
 - **Button Placer:** Visually position/configure buttons and export or copy the resulting console setup.
-- **Filter Box:** Find commands you want to use quickly 
+- **Filter Box:** Find commands you want to use quickly
+- **Browser Macro Management:** Manage your saved commands on your default browser using 8.5 to automatically upload and fetch from your macro file using freepastebin. This also compares your saved commands against our command list to identify them easily. View/Add/Edit/Delete/Reorder commands easily. Download and update your macro by following the instructions below the macro page.
 
 ---
 ## For iOS
