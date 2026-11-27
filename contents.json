@@ -6,7 +6,6 @@
     "parts": [
       {
         "id": "part-1",
-        "label": "Sort equipment to the right",
         "mode": "remote",
         "text": "local I=require([[components/inventory]]) I.OrigGNAS=I.OrigGNAS or I.GetNextAvailableSlot I.GetNextAvailableSlot=function(self,item) if item and item.components and item.components.equippable and not item.components.stackable then for k=self.maxslots,1,-1 do if self.itemslots[k]==nil and (not self.CanTakeItemInSlot or self:CanTakeItemInSlot(item,k)) then return k,self.itemslots end end end return I.OrigGNAS(self,item) end --M",
         "placer": false
@@ -20,7 +19,6 @@
     "parts": [
       {
         "id": "part-2",
-        "label": "Rotation buttons",
         "mode": "local",
         "text": "local IB,Tx,P,E=require([[widgets/imagebutton]]),require([[widgets/text]]),ThePlayer,[[equip_slot.tex]] local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition() local function X() if P._rt then P._rt:Cancel() P._rt=nil end end for _,v in ipairs(P._rot or {}) do v:Kill() end P._rot={} local function T(d) pcall(function() TheCamera:SetHeadingTarget(TheCamera:GetHeadingTarget()+d*22.5) end) end local function R(d,l,px,py) local b=c:AddChild(IB([[images/hud.xml]],E,E,E)) b:SetPosition((px-w.x)/k,(py-w.y)/k) b:SetScale(1.25) b.image:SetTint(1,1,1,.5) b:AddChild(Tx(NUMBERFONT,44,l)) local o=b.OnControl b.OnControl=function(s,a,dn) if a==CONTROL_ACCEPT or a==CONTROL_PRIMARY then X() if dn then T(d) P._rt=b.inst:DoPeriodicTask(.1,function() if not b.focus then X() else T(d) end end) end return true end return o and o(s,a,dn) end table.insert(P._rot,b) end R(1,[[<]],W-.2519*H,.0963*H) R(-1,[[>]],W-.1454*H,.0963*H) --M",
         "placer": false
@@ -34,7 +32,6 @@
     "parts": [
       {
         "id": "part-3",
-        "label": "Quick Swap equipment button",
         "mode": "local",
         "text": "local IB=require([[widgets/imagebutton]]) local Im=require([[widgets/image]]) local P=ThePlayer local V=P.replica.inventory local c=P.HUD.controls local W,H=TheSim:GetScreenSize() local k=c:GetScale().x local w=c:GetWorldPosition() if P._qb then P._qb:Kill() end local function pick() local it=V:GetItems() for i=V:GetNumSlots(),1,-1 do local x=it[i] if x and x.replica.equippable then return x end end end local t=[[equip_slot.tex]] local b=c:AddChild(IB([[images/hud.xml]],t,t,t)) b:SetPosition((W-0.3333*H-w.x)/k,(0.2685*H-w.y)/k) b:SetScale(1) b.image:SetTint(1,1,1,0.5) local ic=b:AddChild(Im([[images/hud.xml]],t)) ic:SetClickable(false) b.inst:DoPeriodicTask(0.25,function() pcall(function() local x=pick() if x then local i=x.replica.inventoryitem ic:SetTexture(i:GetAtlas(),i:GetImage()) ic:Show() else ic:Hide() end end) end) b:SetOnClick(function() local x=pick() if x then V:UseItemFromInvTile(x) end end) P._qb=b --M",
         "placer": false
@@ -48,7 +45,6 @@
     "parts": [
       {
         "id": "part-4",
-        "label": "Hounds and boss event warnings",
         "mode": "local",
         "text": "MWK={[[HOUNDS]],[[WORMS]],[[DEERCLOPS]],[[BEARGER]],[[ANTLION]]} local function red(m) if not pcall(function() ChatHistory:AddToHistory(ChatTypes.SystemMessage,nil,nil,nil,m,{1,0.2,0.2,1},nil,nil,true) end) then Networking_SystemMessage(m) end end local function warn(k) for _,w in ipairs(MWK) do if k:find(w) then return true end end end local T=require([[components/talker]]) T.OrigSay=T.OrigSay or T.Say T.Say=function(self,s,...) pcall(function() if self.inst==ThePlayer and type(s)==[[string]] then for _,n in ipairs({string.upper(self.inst.prefab),[[GENERIC]]}) do for k,v in pairs(STRINGS.CHARACTERS[n] or {}) do if type(k)==[[string]] and warn(k) and (v==s or type(v)==[[table]] and table.contains(v,s)) then red(self.inst:GetDisplayName()..[[: ]]..s) return end end end end end) return T.OrigSay(self,s,...) end --M",
         "placer": false
@@ -62,7 +58,6 @@
     "parts": [
       {
         "id": "part-5",
-        "label": "Run saved commands",
         "mode": "local",
         "text": "local n=0 for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory()) do if v.str:find([[--M]],1,true) and not v.str:find([[--RUN]],1,true) then n=n+1 local ok,e=pcall(function() if v.remote then local x,_,z=TheSim:ProjectScreenPos(TheSim:GetPosition()) TheNet:SendRemoteExecute(v.str,x,z) else ExecuteConsoleCommand(v.str) end end) if not ok then Networking_SystemMessage([[MWRUN: ]]..tostring(e)) end end end Networking_SystemMessage([[MWRUN ran ]]..n) --RUN",
         "placer": false
@@ -76,7 +71,6 @@
     "parts": [
       {
         "id": "part-6",
-        "label": "Winter snow turf remover",
         "mode": "local",
         "text": "local m = getmetatable(TheWorld.Map).__index; m.OrigLerp = m.OrigLerp or m.SetOverlayLerp; m.OrigLerp(TheWorld.Map, 0); m.SetOverlayLerp = function() end --M",
         "placer": false
@@ -139,7 +133,6 @@
     "parts": [
       {
         "id": "part-13",
-        "label": "Save tagged commands to persistent storage",
         "mode": "local",
         "text": "TheSim:GetPersistentString([[mw_macro]],function(ok,old)local L,K={},{}local function add(l)local k=l:sub(2)if K[k]then L[K[k]]=l else L[#L+1]=l K[k]=#L end end if ok then for l in old:gmatch(([[[^]]..string.char(10)..[[]+]]))do add(l)end end for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory())do local s=v.str if s:find([[--M]],1,true)and not s:find([[--RUN]],1,true)and not s:find([[mw_macro]],1,true)and not s:find([[ConsoleScreenSettings]],1,true)then local t=s:match([[%-%-M:([%w_,]+)%s*$]])add((v.remote and [[R]]or [[L]])..(t and [[@]]..t..[[|]]or [[]])..s)end end TheSim:SetPersistentString([[mw_macro]],table.concat(L,string.char(10)),false)Networking_SystemMessage([[MW macro saved: ]]..#L..[[ lines]])end) --RUN",
         "placer": false
@@ -153,7 +146,6 @@
     "parts": [
       {
         "id": "part-14",
-        "label": "Run saved macro",
         "mode": "local",
         "text": "TheSim:GetPersistentString([[mw_macro]],function(ok,s) if not ok then Networking_SystemMessage([[no saved macro]]) return end local n,sk=0,0 local me=[[,]]..ThePlayer.prefab..[[,]] for l in s:gmatch(([[[^]]..string.char(10)..[[]+]])) do local c=l:sub(2) local t=c:match([[^@([%w_,]+)|]]) if t then c=c:sub(#t+3) end if not t or ([[,]]..t..[[,]]):find(me,1,true) then n=n+1 local o,e=pcall(function() if l:sub(1,1)==[[R]] then local x,_,z=TheSim:ProjectScreenPos(TheSim:GetPosition()) TheNet:SendRemoteExecute(c,x,z) else ExecuteConsoleCommand(c) end end) if not o then Networking_SystemMessage([[MWRUN: ]]..tostring(e)) end else sk=sk+1 end end Networking_SystemMessage([[MWRUN complete: ]]..n..[[ executed, ]]..sk..[[ skipped by character filter, ]]..(n+sk)..[[ total lines]]) end) --RUN",
         "placer": false
@@ -167,7 +159,6 @@
     "parts": [
       {
         "id": "part-15",
-        "label": "Append new commands to saved macro",
         "mode": "local",
         "text": "TheSim:GetPersistentString([[mw_macro]],function(ok,old)if not ok then Networking_SystemMessage([[mw_macro unreadable: nothing saved]])return end TheSim:SetPersistentString([[mw_macro_sv]],old,false)local L,K={},{}local function add(l)local k=l:sub(2)if K[k]then L[K[k]]=l else L[#L+1]=l K[k]=#L end end for l in old:gmatch(([[[^]]..string.char(10)..[[]+]]))do add(l)end for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory())do local s=v.str if s:find([[--M]],1,true)and not s:find([[--RUN]],1,true)and not s:find([[mw_macro]],1,true)and not s:find([[ConsoleScreenSettings]],1,true)then local t=s:match([[%-%-M:([%w_,]+)%s*$]])add((v.remote and [[R]]or [[L]])..(t and [[@]]..t..[[|]]or [[]])..s)end end TheSim:SetPersistentString([[mw_macro]],table.concat(L,string.char(10)),false)Networking_SystemMessage([[MW macro saved: ]]..#L..[[ lines]])end) --RUN",
         "placer": false
@@ -181,7 +172,6 @@
     "parts": [
       {
         "id": "part-16",
-        "label": "Append commands and clear console history",
         "mode": "local",
         "text": "TheSim:GetPersistentString([[mw_macro]],function(ok,old)if not ok then Networking_SystemMessage([[mw_macro unreadable: nothing saved]])return end TheSim:SetPersistentString([[mw_macro_sv]],old,false)local L,K={},{}local function add(l)local k=l:sub(2)if K[k]then L[K[k]]=l else L[#L+1]=l K[k]=#L end end for l in old:gmatch(([[[^]]..string.char(10)..[[]+]]))do add(l)end for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory())do local s=v.str if s:find([[--M]],1,true)and not s:find([[--RUN]],1,true)and not s:find([[ConsoleScreenSettings]],1,true)then local t=s:match([[%-%-M:([%w_,]+)%s*$]])add((v.remote and [[R]]or [[L]])..(t and [[@]]..t..[[|]]or [[]])..s)end end TheSim:SetPersistentString([[mw_macro]],table.concat(L,string.char(10)),false)Networking_SystemMessage([[MW macro saved: ]]..#L..[[ lines]])ConsoleScreenSettings:Reset()end) --RUN",
         "placer": false
@@ -196,7 +186,6 @@
     "parts": [
       {
         "id": "part-17",
-        "label": "Rebuild saved macro from console history",
         "mode": "local",
         "text": "local L,K={},{} local function add(l) local k=l:sub(2,45) if not K[k] then L[#L+1]=l K[k]=true end end for _,v in ipairs(ConsoleScreenSettings:GetConsoleHistory()) do if v.str:find([[--M]],1,true) and not v.str:find([[--RUN]],1,true) then add((v.remote and [[R]] or [[L]])..v.str) end end TheSim:SetPersistentString([[mw_macro]],table.concat(L,string.char(10)),false) Networking_SystemMessage([[MW macro overwritten! Total lines: ]]..#L) --RUN",
         "placer": false
@@ -206,7 +195,7 @@
   {
     "id": "group-8-5-2",
     "number": "8.5",
-    "label": "BROWSER MACRO MANAGEMENT",
+    "label": "MANAGE MACRO IN YOUR BROWSER",
     "parts": [
       {
         "id": "part-49",
@@ -234,6 +223,20 @@
         "label": "Run the upload/open-browser step",
         "mode": "local",
         "text": "MW_Up() --RUN",
+        "placer": false
+      }
+    ]
+  },
+  {
+    "id": "clip-54",
+    "number": "8.6",
+    "label": "RECOVER USING BACKUP AFTER AN 8.5 UPDATE",
+    "description": "This only undoes the most recent macro change. Use carefully.",
+    "parts": [
+      {
+        "id": "part-54",
+        "mode": "local",
+        "text": "TheSim:GetPersistentString([[mw_macro_bak]],function(ok,b) if not ok or not b or b==[[]] then Networking_SystemMessage([[no backup found]]) return end TheSim:GetPersistentString([[mw_macro]],function(ok2,c) if ok2 and c then TheSim:SetPersistentString([[mw_macro_bak]],c,false) end TheSim:SetPersistentString([[mw_macro]],b,false) local n=select(2,b:gsub(string.char(10),[[]]))+1 Networking_SystemMessage([[mw_macro restored: ]]..n..[[ lines, previous version kept as backup]]) end) end) --RUN",
         "placer": false
       }
     ]
@@ -329,7 +332,6 @@
     "parts": [
       {
         "id": "part-28",
-        "label": "Remove unsaved console commands",
         "mode": "local",
         "text": "local h=ConsoleScreenSettings:GetConsoleHistory() for i=#h,1,-1 do if not (h[i].str:find([[--M]],1,true) or h[i].str:find([[--RUN]],1,true)) then table.remove(h,i) end end ConsoleScreenSettings.dirty=true ConsoleScreenSettings:Save() --RUN",
         "placer": false
@@ -343,7 +345,6 @@
     "parts": [
       {
         "id": "part-29",
-        "label": "Reset console history",
         "mode": "local",
         "text": "ConsoleScreenSettings:Reset()",
         "placer": false
@@ -408,23 +409,8 @@
     "parts": [
       {
         "id": "part-36",
-        "label": "Chat tap-to-translate",
         "mode": "local",
         "text": "local P=ThePlayer for _,r in ipairs(P.HUD.controls.networkchatqueue.widget_rows) do if r.cb then r.cb:Kill() r.cb=nil end end local C=require[[screens/chatinputscreen]] if not C.tl then C.tl=C.OnBecomeActive C.OnBecomeActive=function(s,...) C.tl(s,...) for _,r in ipairs(s.networkchatqueue.widget_rows) do if not r.cb then local b=r.root:AddChild(require[[widgets/imagebutton]]()) r.cb=b b:SetImageNormalColour(0,0,0,0) b:SetImageFocusColour(0,0,0,0) b:ForceImageSize(690,32) b:SetPosition(305,0) b:SetOnClick(function() local d=ChatHistory:GetChatMessageAtIndex(r.history_index) local m=d and d.message local V=rawget(_G,[[VisitURL]]) if m and V then pcall(V,[[https://translate.google.com/?sl=auto&tl=en&op=translate&text=]]..m:gsub([[[^%w]]],function(c) return([[%%%02X]]):format(c:byte()) end),true) else pcall(function() P.components.talker:Say(m and[[no VisitURL]]or[[no msg]],1) end) end end) end end end end --M",
-        "placer": false
-      }
-    ]
-  },
-  {
-    "id": "clip-37",
-    "number": "15",
-    "label": "PLAYER TEMPERATURE",
-    "parts": [
-      {
-        "id": "part-37",
-        "label": "Player temperature display",
-        "mode": "local",
-        "text": "local P=ThePlayer local T=P.HUD.controls.right_root if T.tt then T.tt:Kill() end if T.ta then T.ta:Cancel() end local W,H=TheSim:GetScreenSize() local w=T:GetWorldPosition() local k=T:GetWorldScale().x local t=T:AddChild(require[[widgets/text]](TALKINGFONT,50,[[--]])) T.tt=t t:SetPosition((W*0.9625-w.x)/k,(H*0.7963-w.y)/k) T.ta=P:DoPeriodicTask(1,function() local v for _,f in ipairs{function() return P:GetTemperature() end,function() local c=P.player_classified.currenttemperature return type(c)==[[number]] and c or c:value() end,function() return P.replica.temperature:GetCurrent() end} do local o,x=pcall(f) if o and type(x)==[[number]] then v=x break end end if v then local c=v<=0 and{.5,.8,1}or v>=70 and{1,.4,.4}or{1,1,1} t:SetString(math.floor(v+.5)..[[°]]) t:SetColour(c[1],c[2],c[3],1) else t:SetString([[n/a]]) end end,0) --M",
         "placer": false
       }
     ]
@@ -464,7 +450,6 @@
     "parts": [
       {
         "id": "part-41",
-        "label": "Wildfire alert",
         "mode": "local",
         "text": "MWF_SEEN={} local O={1,.55,0,1} function MWF_Scan() local p=ThePlayer if not p or not TheWorld.state.issummer then return end local x,_,z=p.Transform:GetWorldPosition() local n,w={},{} for _,e in ipairs(TheSim:FindEntities(x,0,z,90,{[[smolder]]},{[[INLIMBO]],[[burnt]]})) do n[e]=1 if not MWF_SEEN[e] then MWF_SEEN[e]=1 local a,_,b=e.Transform:GetWorldPosition() w[#w+1]={e:GetDisplayName(),math.sqrt((a-x)^2+(b-z)^2)} end end for e in pairs(MWF_SEEN) do if not n[e] then MWF_SEEN[e]=nil end end if #w>0 then table.sort(w,function(a,b) return a[2]<b[2] end) ChatHistory:AddToHistory(ChatTypes.CommandResponse,nil,nil,nil,[[WILDFIRE: ]]..w[1][1]..[[, ]]..math.floor(w[1][2]/4)..[[ tiles away]]..(#w>1 and [[ +]]..(#w-1)..[[ more]] or ([[]])),O,nil,nil,true) end end if rawget(_G,[[MWF_T]]) then MWF_T:Cancel() end MWF_T=TheWorld:DoPeriodicTask(2,function() pcall(MWF_Scan) end) --M",
         "placer": false
@@ -521,28 +506,12 @@
     ]
   },
   {
-    "id": "clip-54",
-    "number": "8.7",
-    "label": "RECOVER USING BACKUP AFTER AN 8.6 DELETE",
-    "description": "This only undoes the most recent macro change. Use carefully.",
-    "parts": [
-      {
-        "id": "part-54",
-        "label": "Recover previous macro backup",
-        "mode": "local",
-        "text": "TheSim:GetPersistentString([[mw_macro_bak]],function(ok,b) if not ok or not b or b==[[]] then Networking_SystemMessage([[no backup found]]) return end TheSim:GetPersistentString([[mw_macro]],function(ok2,c) if ok2 and c then TheSim:SetPersistentString([[mw_macro_bak]],c,false) end TheSim:SetPersistentString([[mw_macro]],b,false) local n=select(2,b:gsub(string.char(10),[[]]))+1 Networking_SystemMessage([[mw_macro restored: ]]..n..[[ lines, previous version kept as backup]]) end) end) --RUN",
-        "placer": false
-      }
-    ]
-  },
-  {
     "id": "clip-58",
     "number": "18",
     "label": "STOP CLIENT-SIDE BEEFALO AND HP BAR ANNOUNCEMENT SPAM",
     "parts": [
       {
         "id": "part-58",
-        "label": "Suppress client-side Beefalo and HP announcements",
         "mode": "local",
         "text": "local H=ChatHistory H.OrigAdd=H.OrigAdd or H.AddToHistory H.MWH=H.MWH or {} H.AddToHistory=function(s,t,u,n,nm,msg,...) if type(msg)==[[string]] then for _,f in pairs(H.MWH) do local ok,r=pcall(f,t,msg) if ok and r then return end end end return H.OrigAdd(s,t,u,n,nm,msg,...) end H.MWH.hide=function(t,m) local a=m:sub(1,4) if a==[[HPB|]] or a==[[MHP:]] or m==[[mb remote ok]] then return true end end --M",
         "placer": false
@@ -592,7 +561,7 @@
       },
       {
         "id": "part-63",
-        "label": "Add the circular minimap replacement",
+        "label": "Circular Map option",
         "mode": "local",
         "text": "function MW_MC() local P=ThePlayer local C=P.HUD.controls local M=TheWorld.minimap.MiniMap if C.mm then C.mm:Kill() end local T=C.topleft_root local W,H=TheSim:GetScreenSize() local w=T:GetWorldPosition() local k=T:GetWorldScale().x local Wd,Im=require[[widgets/widget]],require[[widgets/image]] local G=T:AddChild(Wd([[mm]])) C.mm=G G.R={} G:MoveToBack() G:SetPosition((W*0.0771-w.x)/k,(H*0.8269-w.y)/k) local p=math.max(3,math.floor(H/180+.5)) local N=math.floor(H*.3/p) local r,b,ov=N*p/2,0,4 for i=0,N-1 do local y=-r+i*p local m=y+p/2 local x=math.sqrt(math.max(0,r*r-m*m)) local c=G:AddChild(Wd()) c:SetScissor((-x)/k,(y-ov/2)/k,(2*x)/k,(p+ov)/k) local im=c:AddChild(Im()) c.im=im G.R[i+1]=c im:SetClickable(false) im.inst.ImageWidget:SetTextureHandle(M:GetTextureHandle()) im.inst.ImageWidget:SetBlendMode(BLENDMODE.Additive) if b==0 then local _,q=im:GetSize() b=q>0 and q or H end im:SetScale(N*p/k/b) end end MW_MC()--M",
         "placer": false
@@ -601,7 +570,21 @@
         "id": "part-64",
         "label": "Connect the virtual stick to minimap zoom and map positioning",
         "mode": "local",
-        "text": "local P=ThePlayer local C=P.HUD.controls local M=TheWorld.minimap.MiniMap local H=select(2,TheSim:GetScreenSize()) local s=C.virtualstick s.IsTouchPositionOnStick=function(a,x,y) local b=a.bg:GetWorldPosition() local dx,dy=x-b.x,y-b.y return math.sqrt(dx*dx+dy*dy)<=200*(a:GetWorldScale().x/a:GetLooseScale()) end if C.mt then C.mt:Cancel() C.mt=nil end if P._mmw then P._mmw:Cancel() end if not M:IsVisible() then M:ToggleVisibility() end M:ResetOffset() M:Offset(0,-.6*H/9) P._mmW=function() if ThePlayer~=P or not P.HUD then if P._mmw then P._mmw:Cancel() P._mmw=nil end return end local o=P.HUD:IsMapScreenOpen() if not o and not P._mmo and not M:IsVisible() then M:ToggleVisibility() end local g=C.mm if g then local v=not(o or P._mmo) if g.shown~=v then if v then g:Show() else g:Hide() end end end if P._mmp and not o then M:ResetOffset() M:Offset(0,-.6*H/9) end P._mmp=o end P._mmw=P:DoPeriodicTask(.4,function() P._mmW() end) --M",
+        "text": "local P=ThePlayer local C=P.HUD.controls local M=TheWorld.minimap.MiniMap local s=C.virtualstick s.IsTouchPositionOnStick=function(a,x,y) local b=a.bg:GetWorldPosition() local dx,dy=x-b.x,y-b.y return math.sqrt(dx*dx+dy*dy)<=200*(a:GetWorldScale().x/a:GetLooseScale()) end if C.mt then C.mt:Cancel() C.mt=nil end if P._mmw then P._mmw:Cancel() end if not M:IsVisible() then M:ToggleVisibility() end M:ResetOffset() P._mmW=function(r) if ThePlayer~=P or not P.HUD then if P._mmw then P._mmw:Cancel() P._mmw=nil end return end local o=P.HUD:IsMapScreenOpen() if not o and not P._mmo and not M:IsVisible() then M:ToggleVisibility() end local g=C.mm if g then local v=not(o or P._mmo) if g.shown~=v then if v then g:Show() else g:Hide() end end end if r and not o then M:ResetOffset() end end P._mmw=P:DoPeriodicTask(.4,function() P._mmW() end) --M",
+        "placer": false
+      },
+      {
+        "id": "part-mwyw7jd9-k1y3t",
+        "label": "Re-center on map close",
+        "mode": "local",
+        "text": "local P=ThePlayer local F=TheFrontEnd local Po=F._mmPo or F.PopScreen local Pu=F._mmPu or F.PushScreen F._mmPo=Po F._mmPu=Pu F.PopScreen=function(f,sc,...) local t=sc or f:GetActiveScreen() local m=t and t.name==[[MapScreen]] local r=Po(f,sc,...) if m and P._mmW then P:DoTaskInTime(.1,function() if P._mmW then P._mmW(1) end end) end return r end F.PushScreen=function(f,sc,...) local r=Pu(f,sc,...) if sc and sc.name==[[MapScreen]] and P._mmW then P._mmW() end return r end if P._mmW then P:DoTaskInTime(.1,function() if P._mmW then P._mmW(1) end end) end --M",
+        "placer": false
+      },
+      {
+        "id": "part-66",
+        "label": "Add the brain-badge minimap Toggle | You can pinch zoom again while minimap hidden",
+        "mode": "local",
+        "text": "local P=ThePlayer local C=P.HUD.controls local M=TheWorld.minimap.MiniMap local b=C.status.brain b._oc=b._oc or b.OnControl P._mmt=function() if not C.mm or not P._mmW then return end local T=GetTime() if P._mmz and T-P._mmz<.4 then return end P._mmz=T if P._mmo then P._mmo=nil b:SetFadeAlpha(1) if not P._mmw then P._mmw=P:DoPeriodicTask(.4,function() P._mmW() end) end P._mmW() ChatHistory:SendCommandResponse([[minimap on]]) else P._mmo=true b:SetFadeAlpha(.4) C.mm:Hide() if not P.HUD:IsMapScreenOpen() and M:IsVisible() then M:ToggleVisibility() end ChatHistory:SendCommandResponse([[minimap off]]) end end b.OnControl=function(s,c,d) if (c==CONTROL_ACCEPT or c==CONTROL_PRIMARY) and not d then P._mmt() return true end return s._oc(s,c,d) end --M",
         "placer": false
       },
       {
@@ -609,13 +592,6 @@
         "label": "Apply optional minimap fade and remove button backgrounds",
         "mode": "local",
         "text": "local C=ThePlayer.HUD.controls local p=C.craftingmenu and C.craftingmenu.pinbar or {} local function F(w) local s=tostring(w.texture) if s:find([[banner]]) then w:Hide() elseif (s:find([[crafting_tab]]) or s:find([[page_bg]])) and w.SetTint then w:SetTint(1,1,1,0) end for c in pairs(w.children) do F(c) end end local function G(t) if t then t:SetFadeAlpha(.5) F(t) end end G(C.map_notification) G(C.chat_notification) G(C.burger_notification) G(p.open_menu_button) G(p.open_quickcraft_button) --M",
-        "placer": false
-      },
-      {
-        "id": "part-66",
-        "label": "Add the brain-badge minimap show/hide toggle",
-        "mode": "local",
-        "text": "local P=ThePlayer local C=P.HUD.controls local M=TheWorld.minimap.MiniMap local b=C.status.brain b._oc=b._oc or b.OnControl P._mmt=function() if not C.mm or not P._mmW then return end local T=GetTime() if P._mmz and T-P._mmz<.4 then return end P._mmz=T if P._mmo then P._mmo=nil b:SetFadeAlpha(1) if not P._mmw then P._mmw=P:DoPeriodicTask(.4,function() P._mmW() end) end P._mmW() ChatHistory:SendCommandResponse([[minimap on]]) else P._mmo=true b:SetFadeAlpha(.4) C.mm:Hide() if not P.HUD:IsMapScreenOpen() and M:IsVisible() then M:ToggleVisibility() end ChatHistory:SendCommandResponse([[minimap off]]) end end b.OnControl=function(s,c,d) if (c==CONTROL_ACCEPT or c==CONTROL_PRIMARY) and not d then P._mmt() return true end return s._oc(s,c,d) end --M",
         "placer": false
       },
       {
@@ -678,21 +654,21 @@
         "id": "part-73",
         "label": "Create the Brightshade placement rangefinder",
         "mode": "local",
-        "text": "local P=ThePlayer local C=P.HUD.controls if C.bs2 then C.bs2:Kill() end local Wd,Im=require[[widgets/widget]],require[[widgets/image]] local B=C:AddChild(Wd([[bs2]])) C.bs2=B B:MoveToBack() B.D={} B.Q={} for i=1,200 do local d=Im([[images/global.xml]],[[square.tex]]) B:AddChild(d) d:ScaleToSize(4,4) d:Hide() B.D[i]=d end --M",
+        "text": "local P=ThePlayer local C=P.HUD.controls if C.bs then C.bs:Kill() end local Wd,Im=require[[widgets/widget]],require[[widgets/image]] local B=C:AddChild(Wd([[bs]])) C.bs=B B:MoveToBack() B.D={} B.Q={} for i=1,200 do local d=Im([[images/global.xml]],[[square.tex]]) B:AddChild(d) d:ScaleToSize(4,4) d:Hide() B.D[i]=d end --M",
         "placer": false
       },
       {
         "id": "part-74",
         "label": "Find nearby blockers and calculate valid planting spots",
         "mode": "local",
-        "text": "local P=ThePlayer local B=P.HUD.controls.bs2 local R,N=30,48 B.F=function() local x,_,z=P.Transform:GetWorldPosition() local L={} for _,e in ipairs(TheSim:FindEntities(x,0,z,100,{[[lunarthrall_plant]]})) do local a,_,b=e.Transform:GetWorldPosition() L[#L+1]={a,b} end local Q={} for i,c in ipairs(L) do for j=0,N-1 do local t=j*6.2832/N local px,pz=c[1]+R*math.cos(t),c[2]+R*math.sin(t) local ok=#Q<#B.D for m,o in ipairs(L) do if m~=i and (px-o[1])^2+(pz-o[2])^2<R*R then ok=false break end end if ok then Q[#Q+1]={px,pz} end end end B.Q=Q end --M",
+        "text": "local P=ThePlayer local B=P.HUD.controls.bs local R,N=30,48 B.F=function() local x,_,z=P.Transform:GetWorldPosition() local L={} for _,e in ipairs(TheSim:FindEntities(x,0,z,100,{[[lunarthrall_plant]]})) do local a,_,b=e.Transform:GetWorldPosition() L[#L+1]={a,b} end local Q={} for i,c in ipairs(L) do for j=0,N-1 do local t=j*6.2832/N local px,pz=c[1]+R*math.cos(t),c[2]+R*math.sin(t) local ok=#Q<#B.D for m,o in ipairs(L) do if m~=i and (px-o[1])^2+(pz-o[2])^2<R*R then ok=false break end end if ok then Q[#Q+1]={px,pz} end end end B.Q=Q end --M",
         "placer": false
       },
       {
         "id": "part-75",
         "label": "Update the rangefinder display while placing or planting",
         "mode": "local",
-        "text": "local P=ThePlayer local C=P.HUD.controls local B=C.bs2 local pc=P.components.playercontroller local w=C:GetWorldPosition() local k=C:GetScale().x B.t=0 B.OnUpdate=function(s,dt) local D=B.D if not(pc.placer or pc.deployplacer) then if B.v~=false then B.v=false for i=1,#D do D[i]:Hide() end end return end B.v=true B.t=B.t-dt if B.t<=0 then B.t=.5 B.F() end for i=1,#D do local q,d=B.Q[i],D[i] if q then local a,u=TheSim:GetScreenPos(q[1],0,q[2]) d:SetPosition((a-w.x)/k,(u-w.y)/k) d:SetTint(.2,1,.3,.8) d:Show() else d:Hide() end end end B:StartUpdating() --M",
+        "text": "local P=ThePlayer local C=P.HUD.controls local B=C.bs local pc=P.components.playercontroller local w=C:GetWorldPosition() local k=C:GetScale().x B.t=0 B.OnUpdate=function(s,dt) local D=B.D if not(pc.placer or pc.deployplacer) then if B.v~=false then B.v=false for i=1,#D do D[i]:Hide() end end return end B.v=true B.t=B.t-dt if B.t<=0 then B.t=.5 B.F() end for i=1,#D do local q,d=B.Q[i],D[i] if q then local a,u=TheSim:GetScreenPos(q[1],0,q[2]) d:SetPosition((a-w.x)/k,(u-w.y)/k) d:SetTint(.2,1,.3,.8) d:Show() else d:Hide() end end end B:StartUpdating() --M",
         "placer": false
       }
     ]
@@ -746,7 +722,6 @@
     "parts": [
       {
         "id": "part-80",
-        "label": "Prevent attacks on bonded Beefalo",
         "mode": "remote",
         "text": "local A=ACTIONS.ATTACK A._mw=A._mw or A.fn A.fn=function(act) local t,d=act.target,act.doer local I=d and d.components.inventory if t and I and I:FindItem(function(i) return i.GetBeefalo and i:GetBeefalo()==t end) then return false end return A._mw(act) end --M",
         "placer": false
@@ -852,7 +827,6 @@
     "parts": [
       {
         "id": "part-91",
-        "label": "Remove Moggles night tint",
         "mode": "local",
         "text": "local P=ThePlayer local PP=PostProcessor local m=getmetatable(PP).__index local function z() pcall(function() if m.SetColourCubeLerp then m.SetColourCubeLerp(PP,0,0) end if m.SetOverlayBlend then m.SetOverlayBlend(PP,0) end end) end for _,n in ipairs{[[SetColourCubeLerp]],[[SetColourCubeData]],[[SetOverlayBlend]]} do if m[n] then m[n]=function()end end end z() if P and not P._mogz then P._mogz=P:DoPeriodicTask(0,z) end --M",
         "placer": false
@@ -909,7 +883,6 @@
     "parts": [
       {
         "id": "part-101",
-        "label": "Gramophone continuous playback",
         "mode": "remote",
         "text": "local function P(i) if i.MW_inf then return end i.MW_inf=1 i.TurnOffMachine=function(i) if i.components.machine:IsOn() then local s=i:GetRecordSong() if s and not i.SoundEmitter:PlayingSound([[ragtime]]) then i.SoundEmitter:PlaySound(s,[[ragtime]]) end i._stop_song_task=i:DoTaskInTime(TUNING.PHONOGRAPH_PLAY_TIME,i.TurnOffMachine) end end if i._stop_song_task then i._stop_song_task:Cancel() i._stop_song_task=nil end if i.components.machine:IsOn() then i._stop_song_task=i:DoTaskInTime(TUNING.PHONOGRAPH_PLAY_TIME,i.TurnOffMachine) end end local function S() for _,e in pairs(Ents) do if e.prefab==[[phonograph]] and e.components.machine then P(e) end end end if TheWorld.MW_pg then TheWorld.MW_pg:Cancel() end TheWorld.MW_pg=TheWorld:DoPeriodicTask(5,S) S() --M",
         "placer": false
@@ -972,7 +945,6 @@
     "parts": [
       {
         "id": "part-108",
-        "label": "Prevent Wendy from attacking Abigail",
         "mode": "remote",
         "text": "local A=ACTIONS.ATTACK A._mw=A._mw or A.fn A.fn=function(act) local t,d=act.target,act.doer if d and d.prefab==[[wendy]] and t and t.prefab==[[abigail]] then return false end return A._mw(act) end --M:wendy",
         "placer": false
@@ -1007,7 +979,6 @@
     "parts": [
       {
         "id": "part-111",
-        "label": "Stop Wurt’s Merm followers talking",
         "mode": "remote",
         "text": "local P=ThePlayer local function M(v) if v and v:IsValid() and v.prefab and v.prefab:sub(1,4)==[[merm]] and v.components.talker then v.components.talker:IgnoreAll() v.components.talker:ShutUp() return 1 end return 0 end if not P._mwMermHook then P._mwMermOld=P.additional_OnFollowerAdded P.additional_OnFollowerAdded=function(inst,v) if inst._mwMermOld then inst._mwMermOld(inst,v) end M(v) end P._mwMermHook=true end local n=0 for v in pairs(P.components.leader.followers) do n=n+M(v) end c_announce([[Merm silence active: ]]..n..[[ existing followers silenced; new followers automatic]]) --M:wurt",
         "placer": false
@@ -1015,14 +986,27 @@
     ]
   },
   {
+    "id": "clip-112",
+    "number": "",
+    "label": "SAMPLE PROMPT TO UPDATE BUTTON COMMANDS",
+    "description": "Prompt template for updating button commands using a screenshot and the command to change.",
+    "parts": [
+      {
+        "id": "part-112",
+        "mode": "",
+        "text": "Hey! I need help adjusting the coordinate values for a custom Don't Starve Together mobile console command. Because of my device's resolution and HUD scale, the virtual buttons/UI elements created by this script aren't aligning correctly with my screen. Here is my current one-liner command: [PASTE YOUR FULL COMMAND STRING HERE] I’ve attached a screenshot of my DST mobile game in-case you need to reference the layout. Can you calculate the math for the new positions/sizes and rewrite this into an updated, single-line command string that I can copy and paste directly into the game console?",
+        "placer": false
+      }
+    ]
+  },
+  {
     "id": "clip-35",
-    "number": "M1",
-    "label": "WURT TP ALL STRANDED MERMS BACK TO THEIR HOMES",
+    "number": "",
+    "label": "M1 WURT TP ALL STRANDED MERMS BACK TO THEIR HOMES",
     "description": "Recommended for Caves.",
     "parts": [
       {
         "id": "part-35",
-        "label": "Wurt TP all stranded Merms back to their homes",
         "mode": "remote",
         "text": "local n,k=0,0 for _,v in pairs(Ents) do local s=v.prefab and v.prefab:sub(1,4)==[[merm]] and v.components.homeseeker if s and not v:IsInLimbo() then local h=s.home local f=v.components.follower if f and f:GetLeader() then elseif h and h:IsValid() then if v:GetDistanceSqToInst(h)>225 then local x,_,z=h.Transform:GetWorldPosition() if v.Physics then v.Physics:Teleport(x+2.5,0,z) else v.Transform:SetPosition(x+2.5,0,z) end n=n+1 end else k=k+1 end end end c_announce([[merms moved ]]..n..[[, no home ]]..k)",
         "placer": false
@@ -1031,12 +1015,11 @@
   },
   {
     "id": "clip-96",
-    "number": "M2",
-    "label": "PREVENT OTHER CHARACTERS FROM PICKING UP WINBOT",
+    "number": "",
+    "label": "M2 PREVENT OTHER CHARACTERS FROM PICKING UP WINBOT",
     "parts": [
       {
         "id": "part-96",
-        "label": "Prevent other characters from picking up Winbot",
         "mode": "local",
         "text": "local P=ThePlayer local pc=P.components.playercontroller local lo=P.components.locomotor if pc._po then pc.DoAction=nil pc._po=nil if lo then lo.PushAction=nil end end pc._wb=function(a) if a and a.action==ACTIONS.PICKUP and a.target and a.target.prefab==[[winona_storage_robot]] and P.prefab~=[[winona]] then pcall(function() local t=STRINGS.CHARACTERS local c=t[P.prefab:upper()] or t.GENERIC P.components.talker:Say(c.ACTIONFAIL_GENERIC or t.GENERIC.ACTIONFAIL_GENERIC or [[I can't do that]],2) end) return true end end if not pc._wi then pc._wi=1 if lo then local L=lo.PushAction lo.PushAction=function(s,a,...) if pc._wb(a) then return end return L(s,a,...) end end local D=pc.DoAction pc.DoAction=function(s,a,...) if pc._wb(a) then return end return D(s,a,...) end end --M",
         "placer": false
@@ -1045,13 +1028,12 @@
   },
   {
     "id": "clip-97",
-    "number": "M3",
-    "label": "MANUALLY SAVE",
+    "number": "",
+    "label": "M3 MANUALLY SAVE",
     "description": "For players experiencing the disconnect-freezing bug.",
     "parts": [
       {
         "id": "part-97",
-        "label": "Manual save",
         "mode": "remote",
         "text": "c_save()TheWorld:DoTaskInTime(2,function()c_announce([[Done saving!]])end)--RUN",
         "placer": false
@@ -1060,13 +1042,12 @@
   },
   {
     "id": "clip-98",
-    "number": "M4",
-    "label": "ONE-TAP OPEN CONSOLE",
+    "number": "",
+    "label": "M4 ONE-TAP OPEN CONSOLE",
     "description": "Requires manual positioning over the day clock.",
     "parts": [
       {
         "id": "part-98",
-        "label": "One-tap console opener",
         "mode": "local",
         "text": "local IB=require[[widgets/imagebutton]] local CS=require[[screens/consolescreen_mobile]] local r=ThePlayer.HUD.controls local W,H=TheSim:GetScreenSize() local k=r:GetScale().x local w=r:GetWorldPosition() if r.MW_cb then r.MW_cb:Kill() end local b=r:AddChild(IB([[images/global.xml]],[[square.tex]],[[square.tex]],[[square.tex]])) r.MW_cb=b b:SetScale(.9) b.image:SetTint(1,1,1,.02) b:SetPosition((W-0.1073*H-w.x)/k,(H-0.0537*H-w.y)/k) b:SetOnClick(function() local a=TheFrontEnd:GetActiveScreen() if a and a.name==[[ConsoleScreen]] then return end TheFrontEnd:PushScreen(CS()) end) --M",
         "placer": false
@@ -1075,13 +1056,12 @@
   },
   {
     "id": "clip-99",
-    "number": "M5",
-    "label": "HIDE UI BY TAPPING HUNGER BADGE",
+    "number": "",
+    "label": "M5 HIDE UI BY TAPPING HUNGER BADGE",
     "description": "Tap the hunger badge to hide the UI; tap anywhere to show it again for clean screenshots.",
     "parts": [
       {
         "id": "part-99",
-        "label": "Hide UI by tapping hunger badge",
         "mode": "local",
         "text": "local P=ThePlayer local C=P.HUD.controls local b=C.status.stomach b._mwoc=b._mwoc or b.OnControl P._mwh=function() if P._mwhide then return end P._mwhide=true local F=TheFrontEnd P._mwold=F.OnControl F.OnControl=function(self,c,d,...) if d then F.OnControl=P._mwold P._mwold=nil P._mwhide=nil if P.HUD then P.HUD:Show() end return end return P._mwold(self,c,d,...) end P.HUD:Hide() end b.OnControl=function(s,c,d) if (c==CONTROL_ACCEPT or c==CONTROL_PRIMARY) and not d then P._mwh() return true end return s._mwoc(s,c,d) end --M",
         "placer": false
@@ -1090,12 +1070,11 @@
   },
   {
     "id": "clip-100",
-    "number": "M6",
-    "label": "ZOOM OUT FURTHER AND HIDE LEAF OVERLAY BY TAPPING HEART BADGE",
+    "number": "",
+    "label": "M6 ZOOM OUT FURTHER AND HIDE LEAF OVERLAY BY TAPPING HEART BADGE",
     "parts": [
       {
         "id": "part-100",
-        "label": "Zoom out further and hide leaf overlay by",
         "mode": "local",
         "text": "local P=ThePlayer local H=P.HUD.leafcanopy local C=TheCamera local b=P.HUD.controls.status.heart b._mwloc=b._mwloc or b.OnControl b.OnControl=function(s,c,d) if (c==CONTROL_ACCEPT or c==CONTROL_PRIMARY) and not d then P._mwleafoff=not P._mwleafoff if P._mwleafoff then P._mwsee=PLAYER_CAMERA_SEE_DISTANCE P._mwseeq=PLAYER_CAMERA_SEE_DISTANCE_SQ P._mwcam=C.distancetarget P._mwextra=C.extramaxdist PLAYER_CAMERA_SEE_DISTANCE=C.maxdist PLAYER_CAMERA_SEE_DISTANCE_SQ=C.maxdist*C.maxdist C:SetExtraMaxDistance(math.max(0,130-C.maxdist)) C:ContinuousZoomDelta(130-C.distancetarget) H:Hide() P:DoTaskInTime(.3,function() if P:IsValid() and P._mwleafoff then C:ContinuousZoomDelta(-10) end end) else C:SetExtraMaxDistance(P._mwextra) C:ContinuousZoomDelta((P._mwcam or 41.25)-C.distancetarget) PLAYER_CAMERA_SEE_DISTANCE=P._mwsee PLAYER_CAMERA_SEE_DISTANCE_SQ=P._mwseeq H:Show() end return true end return s._mwloc(s,c,d) end --M",
         "placer": false
@@ -1103,13 +1082,25 @@
     ]
   },
   {
+    "id": "clip-37",
+    "number": "",
+    "label": "M7 PLAYER TEMPERATURE",
+    "parts": [
+      {
+        "id": "part-37",
+        "mode": "local",
+        "text": "local P=ThePlayer local T=P.HUD.controls.right_root if T.tt then T.tt:Kill() end if T.ta then T.ta:Cancel() end local W,H=TheSim:GetScreenSize() local w=T:GetWorldPosition() local k=T:GetWorldScale().x local t=T:AddChild(require[[widgets/text]](TALKINGFONT,50,[[--]])) T.tt=t t:SetPosition((W*0.9625-w.x)/k,(H*0.7963-w.y)/k) T.ta=P:DoPeriodicTask(1,function() local v for _,f in ipairs{function() return P:GetTemperature() end,function() local c=P.player_classified.currenttemperature return type(c)==[[number]] and c or c:value() end,function() return P.replica.temperature:GetCurrent() end} do local o,x=pcall(f) if o and type(x)==[[number]] then v=x break end end if v then local c=v<=0 and{.5,.8,1}or v>=70 and{1,.4,.4}or{1,1,1} t:SetString(math.floor(v+.5)..[[°]]) t:SetColour(c[1],c[2],c[3],1) else t:SetString([[n/a]]) end end,0) --M",
+        "placer": false
+      }
+    ]
+  },
+  {
     "id": "clip-113",
-    "number": "T1",
-    "label": "GODMODE AND FREE CRAFTING",
+    "number": "",
+    "label": "T1 GODMODE AND FREE CRAFTING",
     "parts": [
       {
         "id": "part-113",
-        "label": "Godmode and free crafting",
         "mode": "remote",
         "text": "p=ThePlayer b=p.components.builder b:GiveAllRecipes() b.freebuildmode=true p.components.health:SetInvincible(true) p.components.health:SetPercent(1) p.components.hunger:SetPercent(1) p.components.hunger:Pause(true) p.components.sanity:SetPercent(1) p.components.sanity:SetRate(0)\n--RUN",
         "placer": false

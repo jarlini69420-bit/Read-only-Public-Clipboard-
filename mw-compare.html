@@ -122,8 +122,8 @@ tr.cmdrow .cmdview{max-width:none;margin:0 0 6px;white-space:pre-wrap;overflow-w
   <div class="row"><button id="cpmac" class="sec">Copy macro text</button><button id="dl" class="sec">Download .txt</button><button id="send">Send to device</button></div>
   <div class="st" id="sendst"></div>
   <label for="dlid">New FreePastebin paste ID</label>
-  <div class="row"><input type="text" id="dlid" readonly placeholder="Upload the edited macro first" style="flex:1;min-width:150px"><button id="cpid" class="sec" disabled>Copy ID</button><button id="cpcmd" class="sec" disabled>Copy MW_Dn</button><button id="cpgo" class="sec" disabled>Copy MW_Go()</button></div>
-  <div class="mut">Copy MW_Dn first; then Copy MW_Go() becomes available. In game, switch the console to <b>Local</b> mode and run MW_Dn([[ID]]), check the checksum, then (still in <b>Local</b> mode) run MW_Go() to apply. Your previous macro is saved as mw_macro_bak.</div>
+  <div class="row"><input type="text" id="dlid" readonly placeholder="Upload the edited macro first" style="flex:1;min-width:150px"><button id="cpid" class="sec" disabled>Copy ID</button><button id="cpcmd" class="sec" disabled>Copy MW_Dn</button><button id="cpgo" class="sec" disabled>Copy MW_Go + run</button></div>
+  <div class="mut">Copy MW_Dn first; then Copy MW_Go() becomes available. In game, switch the console to <b>Local</b> mode and run MW_Dn([[ID]]). Wait for the <b>download OK</b> message (if it says <b>download failed</b>, check the ID and try again), then, still in <b>Local</b> mode, paste and run the <b>Copy MW_Go + run</b> command. It applies the macro, runs it and clears the console history. Your previous macro is saved as mw_macro_bak. Typing <code>MW_Go()</code> instead only applies it.</div>
   <details style="margin-top:10px"><summary>Recent uploads on this browser</summary><div id="uphist" class="mut">No saved uploads yet.</div><button id="clearhist" class="sec mini" type="button">Clear upload history</button></details>
 </div>
 
@@ -150,6 +150,8 @@ function store(k,v){try{localStorage.setItem(k,v);}catch(e){}}
 function recall(k){try{return localStorage.getItem(k)||"";}catch(e){return "";}}
 function getUploadHistory(){try{var a=JSON.parse(localStorage.getItem("mwc_upload_history")||"[]");return Array.isArray(a)?a:[];}catch(e){return [];}}
 function saveUploadHistory(a){try{localStorage.setItem("mwc_upload_history",JSON.stringify(a.slice(0,10)));}catch(e){}}
+/* one console command (under 1000 chars): apply the downloaded macro, then run it for this character and clear the console history */
+var GO_RUN="MW_Go(function(s) local n,sk=0,0 local me=[[,]]..ThePlayer.prefab..[[,]] for l in s:gmatch(([[[^]]..string.char(10)..[[]+]])) do local c=l:sub(2) local t=c:match([[^@([%w_,]+)|]]) if t then c=c:sub(#t+3) end if not t or ([[,]]..t..[[,]]):find(me,1,true) then n=n+1 local o,e=pcall(function() if l:sub(1,1)==[[R]] then local x,_,z=TheSim:ProjectScreenPos(TheSim:GetPosition()) TheNet:SendRemoteExecute(c,x,z) else ExecuteConsoleCommand(c) end end) if not o then Networking_SystemMessage([[MWRUN: ]]..tostring(e)) end else sk=sk+1 end end Networking_SystemMessage([[MWRUN complete: ]]..n..[[ executed, ]]..sk..[[ skipped by character filter, ]]..(n+sk)..[[ total lines]]) ConsoleScreenSettings:Reset() end) --RUN";
 function renderUploadHistory(){var box=$("uphist");if(!box)return;box.textContent="";var a=getUploadHistory();if(!a.length){box.textContent="No saved uploads yet.";return;}a.forEach(function(x){var row=el("div","item"),line=el("div",null,(x.date||"")+" · "+x.id+" · "+(x.chars||0)+" chars"),btn=el("button","sec mini","Use ID");btn.type="button";btn.addEventListener("click",function(){$("paste").value=x.id;$("dlid").value=x.id;store("mwc_paste",x.id);$("cpid").disabled=false;$("cpcmd").disabled=false;$("cpgo").disabled=true;});row.appendChild(line);row.appendChild(btn);box.appendChild(row);});}
 function setSt(id,msg,cls){var e=$(id);e.textContent=msg;e.className="st"+(cls?" "+cls:"");}
 function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
@@ -193,17 +195,23 @@ function parseIndex(d){
   var out=[];
   arr.forEach(function(c,ci){
     var isO=c&&typeof c==="object";
-    var num=isO&&c.number!=null?String(c.number):String(ci+1);
-    var clip=isO?String(c.label||c.title||c.name||"Clip "+num):"Clip "+num;
+    /* number: "7", "8.5" ... ; may be empty for clips coded in their label ("M1 ...", "T1 ..."); legacy flat files have none */
+    var rawNum=isO&&c.number!=null?String(c.number).trim():String(ci+1);
+    var lab=isO?String(c.label||c.title||c.name||""):"";
+    var code=(lab.match(/^[A-Z]+\d+(?:\.\d+)*(?=\s)/)||[""])[0];
+    var num=rawNum||code||"-";
+    var clip=lab||"Clip "+num;
+    var clipShown=rawNum?rawNum+" · "+clip:clip;   /* main label carries the clip number */
     var parts=isO&&Array.isArray(c.parts)?c.parts:null;
     if(!parts){
       var t=isO?(c.text||c.script||c.content||c.cmd||""):String(c);
       parts=[{label:"",text:t,mode:c&&c.mode,placer:c&&c.placer}];
     }
     parts.forEach(function(p,pi){
+      if(p&&typeof p.mode==="string"&&!p.mode.trim())return;   /* no mode = not a command (e.g. a prompt template) */
       var t=String(p&&p.text!=null?p.text:""),multi=parts.length>1;
       var pl=p&&p.label?String(p.label):"";
-      var label=multi?(pl?clip+" › "+pl:clip+" › part "+(pi+1)):clip;
+      var label=multi?(pl?clipShown+" › "+(pi+1)+". "+pl:clipShown+" › part "+(pi+1)):clipShown;
       var mode=p&&p.mode?(/^r/i.test(p.mode)?"R":"L"):"";
       out.push({i:out.length+1,ref:num+(multi?"."+(pi+1):""),clip:clip,part:pl,partNo:pi+1,parts:parts.length,
         label:label,mode:mode,placer:!!(p&&p.placer),text:t,len:t.length,n:norm(t,false)});
@@ -450,7 +458,7 @@ $("send").addEventListener("click",function(){
 });
 $("cpid").addEventListener("click",function(){if($("dlid").value)copyTxt($("dlid").value,$("cpid"));});
 $("cpcmd").addEventListener("click",function(){if($("dlid").value){copyTxt("MW_Dn([["+$("dlid").value+"]])",$("cpcmd"));$("cpgo").disabled=false;}});
-$("cpgo").addEventListener("click",function(){copyTxt("MW_Go()",$("cpgo"));});
+$("cpgo").addEventListener("click",function(){copyTxt(GO_RUN,$("cpgo"));});
 $("clearhist").addEventListener("click",function(){saveUploadHistory([]);renderUploadHistory();});
 $("lnk").addEventListener("click",function(){
   var id=pasteId();if(!id){setSt("macst","enter a FreePastebin paste ID first","bad");return;}
@@ -466,6 +474,69 @@ if(pasteParam)store("mwc_paste",pasteParam);
 $("idxurl").value=(qp&&qp.get("u"))||(recall("mwc_url")!==OLD_PINNED&&recall("mwc_url"))||DEFAULT_URL;
 if(validPaste())autoRun(true);else ensureIndex(false).catch(function(){});
 window.__mwc={norm:norm,splitText:splitText,compare:compare,check:check,state:state};
+})();
+</script>
+<style id="fsb-css">
+#fsb{position:fixed;top:0;right:0;bottom:0;width:34px;z-index:60;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .25s}
+#fsb.on{visibility:visible}
+#fsb.show{opacity:1}
+#fsb .trk{position:absolute;right:0;top:calc(env(safe-area-inset-top,0px) + 10px);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);width:34px}
+#fsb .thumb{position:absolute;right:0;top:0;width:34px;height:60px;pointer-events:none;touch-action:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;will-change:transform}
+#fsb.show .thumb{pointer-events:auto}
+#fsb .pill{position:absolute;right:4px;top:6px;bottom:6px;width:8px;border-radius:5px;background:var(--acc,var(--text-accent,#6b9fd4));box-shadow:0 0 0 1px rgba(0,0,0,.3);transition:width .12s}
+#fsb.drag .pill{width:12px}
+@media (prefers-reduced-motion:reduce){#fsb,#fsb .pill{transition:none}}
+</style>
+<script id="fsb-js">
+/* Fast-scroll handle for long pages: appears on scroll, drag it to jump anywhere.
+   Touch uses non-passive touch events so iOS cannot also scroll the page under the finger. */
+(function(){
+  if(document.getElementById("fsb"))return;
+  var de=document.documentElement,db=document.body;
+  var root=document.createElement("div");root.id="fsb";root.setAttribute("aria-hidden","true");
+  root.innerHTML='<div class="trk"><div class="thumb"><div class="pill"></div></div></div>';
+  db.appendChild(root);
+  var trk=root.firstChild,thumb=trk.firstChild;
+  var drag=false,grab=0,hideT=0,dragMax=0,raf=0,pend=0,tid=null;
+  function clamp(v){return v<0?0:v>1?1:v;}
+  function metrics(){var vh=window.innerHeight,H=Math.max(de.scrollHeight,db.scrollHeight);return{vh:vh,max:H-vh};}
+  function modalOpen(){var o=document.getElementById("ov");return !!(o&&!o.hidden);}
+  function reveal(){root.classList.add("show");clearTimeout(hideT);if(!drag)hideT=setTimeout(function(){root.classList.remove("show");},2500);}
+  function update(showIt){
+    var m=metrics(),ok=m.max>m.vh*1.2&&!modalOpen();
+    root.classList.toggle("on",ok);if(!ok)return;
+    if(drag)return;
+    var tr=trk.getBoundingClientRect(),th=thumb.offsetHeight||60,usable=Math.max(1,tr.height-th);
+    var p=clamp((window.pageYOffset||de.scrollTop||0)/m.max);
+    thumb.style.transform="translateY("+(p*usable)+"px)";
+    if(showIt)reveal();
+  }
+  function jumpNow(y){try{window.scrollTo({top:y,left:0,behavior:"instant"});}catch(e){window.scrollTo(0,y);}}
+  function jump(y){pend=y;if(!raf)raf=requestAnimationFrame(function(){raf=0;jumpNow(pend);});}
+  function begin(y){drag=true;dragMax=metrics().max;grab=y-thumb.getBoundingClientRect().top;root.classList.add("drag","show");clearTimeout(hideT);}
+  function moveTo(y){
+    var tr=trk.getBoundingClientRect(),th=thumb.offsetHeight||60,usable=Math.max(1,tr.height-th);
+    var p=clamp((y-grab-tr.top)/usable);
+    thumb.style.transform="translateY("+(p*usable)+"px)";
+    jump(p*dragMax);
+  }
+  function end(){if(!drag)return;drag=false;tid=null;root.classList.remove("drag");update(true);}
+  function findT(list){for(var i=0;i<list.length;i++)if(list[i].identifier===tid)return list[i];return null;}
+  /* touch: iPad / iPhone / Android */
+  thumb.addEventListener("touchstart",function(e){if(drag||!e.changedTouches.length)return;var t=e.changedTouches[0];tid=t.identifier;e.preventDefault();begin(t.clientY);},{passive:false});
+  thumb.addEventListener("touchmove",function(e){if(!drag||tid==null)return;var t=findT(e.touches);if(!t)return;e.preventDefault();moveTo(t.clientY);},{passive:false});
+  function tEnd(e){if(!drag||tid==null)return;if(findT(e.touches))return;end();}
+  thumb.addEventListener("touchend",tEnd);thumb.addEventListener("touchcancel",tEnd);
+  /* mouse (desktop) */
+  thumb.addEventListener("pointerdown",function(e){if(e.pointerType!=="mouse")return;e.preventDefault();begin(e.clientY);try{thumb.setPointerCapture(e.pointerId);}catch(_){}});
+  thumb.addEventListener("pointermove",function(e){if(!drag||e.pointerType!=="mouse")return;e.preventDefault();moveTo(e.clientY);});
+  function mEnd(e){if(e.pointerType&&e.pointerType!=="mouse")return;end();}
+  thumb.addEventListener("pointerup",mEnd);thumb.addEventListener("pointercancel",mEnd);thumb.addEventListener("lostpointercapture",mEnd);
+  window.addEventListener("scroll",function(){update(true);},{passive:true});
+  window.addEventListener("resize",function(){update(false);});
+  window.addEventListener("orientationchange",function(){setTimeout(function(){update(false);},250);});
+  if(window.ResizeObserver){var ro=new ResizeObserver(function(){update(false);});ro.observe(de);ro.observe(db);}
+  setTimeout(function(){update(false);},300);
 })();
 </script>
 </body>

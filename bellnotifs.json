@@ -203,5 +203,20 @@
     "id": "mwydvxa9umg7",
     "text": "Unified the single-card and multipart code expanders. Tap the smol arrow in the code block to expand. But you don't have to look at it yk. just tap to copy and run",
     "ts": 1795747819329
+  },
+  {
+    "id": "mwywh8z4rrzb",
+    "text": "Fixed (21) Autohitch having a large detection radius around the beefalo. Works great now on ipads and tablets. Now smaller screens might have some difficulty, just tap accurately or dont update this cmd to your macro",
+    "ts": 1795779047344
+  },
+  {
+    "id": "mwywhvq23l2q",
+    "text": "Updated (20) Minimap to recenter on initial run and after every map close. It has veen quite annoying manually recentereting them by opening and closing the map again.",
+    "ts": 1795779076826
+  },
+  {
+    "id": "mwz1ofpbqqbe",
+    "text": "Added Scrollbars for macro manager and clipboard",
+    "ts": 1795787780735
   }
 ]

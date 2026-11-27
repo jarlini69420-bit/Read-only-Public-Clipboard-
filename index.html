@@ -540,7 +540,7 @@ function normalizeClips(data) {
           }]
         : item.parts.map((part, j) => ({
             id: part.id || ('part-' + (i + 1) + '-' + (j + 1)),
-            label: part.label || ('Part ' + (j + 1)),
+            label: item.parts.length > 1 ? (part.label || ('Part ' + (j + 1))) : '',
             mode: part.mode || '',
             text: part.text || '',
             placer: !!part.placer
@@ -548,7 +548,7 @@ function normalizeClips(data) {
       return {
         id: item.id || ('clip-' + (i + 1)),
         number: item.number || '',
-        label: item.label || parts[0]?.label || ('Clip ' + (i + 1)),
+        label: item.label || (parts.length > 1 ? parts[0]?.label : '') || ('Clip ' + (i + 1)),
         parts
       };
     }
@@ -765,12 +765,13 @@ function appendUpdates(card, clip) {
 }
 
 function partDisplay(part, clip, partIndex) {
-  const parsed = parseLabel(part.label);
+  const sourceLabel = clip.parts.length === 1 ? clip.label : part.label;
+  const parsed = parseLabel(sourceLabel);
   const cardParsed = parseLabel(clip.label);
   const baseNumber = clip.number || cardParsed.number || parsed.number || '';
   const number = baseNumber && clip.parts.length > 1 ? baseNumber + '.' + (partIndex + 1) : baseNumber;
   const mode = part.mode || parsed.mode || detectModeFromText(part.text);
-  const title = (parsed.title || part.label || '').trim();
+  const title = (parsed.title || sourceLabel || '').trim();
   return { number, mode, title: title || ('Part ' + (partIndex + 1)) };
 }
 
@@ -949,6 +950,49 @@ function render() {
 setInterval(() => { if (clips.length) render(); }, 30000);
 loadClips();
 loadNotifs();
+</script>
+<style id="fsb-css">
+html{scrollbar-width:none!important}
+html::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+#fsb{position:fixed;top:0;right:0;bottom:0;width:34px;z-index:60;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .25s}
+#fsb.on{visibility:visible}
+#fsb.show{opacity:1}
+#fsb .trk{position:absolute;right:0;top:calc(env(safe-area-inset-top,0px) + 10px);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);width:34px}
+#fsb .thumb{position:absolute;right:0;top:0;width:34px;height:60px;pointer-events:none;touch-action:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;will-change:transform}
+#fsb.show .thumb{pointer-events:auto}
+#fsb .pill{position:absolute;right:4px;top:6px;bottom:6px;width:8px;border-radius:5px;background:var(--acc,var(--text-accent,#6b9fd4));box-shadow:0 0 0 1px rgba(0,0,0,.3);transition:width .12s}
+#fsb.drag .pill{width:12px}
+@media (prefers-reduced-motion:reduce){#fsb,#fsb .pill{transition:none}}
+</style>
+<script id="fsb-js">
+/* iOS-safe fast scroll: cancel native touch scrolling, freeze drag range, and coalesce jumps per frame. */
+(function(){
+  if(document.getElementById("fsb"))return;
+  var de=document.documentElement,db=document.body;
+  var root=document.createElement("div");root.id="fsb";root.setAttribute("aria-hidden","true");
+  root.innerHTML='<div class="trk"><div class="thumb"><div class="pill"></div></div></div>';
+  db.appendChild(root);
+  var trk=root.firstChild,thumb=trk.firstChild,drag=false,grab=0,hideT=0,range=null,touchId=null,lastY=0,raf=0;
+  function clamp(v){return v<0?0:v>1?1:v;}
+  function metrics(){var vh=window.innerHeight,H=Math.max(de.scrollHeight,db.scrollHeight);return{vh:vh,max:Math.max(0,H-vh)};}
+  function reveal(){root.classList.add("show");clearTimeout(hideT);if(!drag)hideT=setTimeout(function(){root.classList.remove("show");},2500);}
+  function update(showIt){var m=metrics(),ok=m.max>m.vh*1.2;root.classList.toggle("on",ok);if(!ok)return;if(drag)return;var tr=trk.getBoundingClientRect(),th=thumb.offsetHeight||60,usable=Math.max(1,tr.height-th),p=clamp((window.pageYOffset||de.scrollTop||0)/m.max);thumb.style.transform="translateY("+(p*usable)+"px)";if(showIt)reveal();}
+  function begin(y){if(drag)return;var tr=trk.getBoundingClientRect(),th=thumb.offsetHeight||60;range={top:tr.top,usable:Math.max(1,tr.height-th),max:metrics().max};grab=y-thumb.getBoundingClientRect().top;drag=true;root.classList.add("drag","show");clearTimeout(hideT);}
+  function queue(y){if(!drag||!range)return;lastY=y;if(raf)return;raf=requestAnimationFrame(function(){raf=0;if(!drag||!range)return;var p=clamp((lastY-grab-range.top)/range.usable);thumb.style.transform="translateY("+(p*range.usable)+"px)";window.scrollTo(0,p*range.max);});}
+  function end(){if(!drag)return;if(raf&&range){cancelAnimationFrame(raf);raf=0;var p=clamp((lastY-grab-range.top)/range.usable);thumb.style.transform="translateY("+(p*range.usable)+"px)";window.scrollTo(0,p*range.max);}drag=false;range=null;touchId=null;root.classList.remove("drag");update(true);}
+  thumb.addEventListener("touchstart",function(e){if(!e.changedTouches||!e.changedTouches.length)return;e.preventDefault();var t=e.changedTouches[0];touchId=t.identifier;begin(t.clientY);},{passive:false});
+  thumb.addEventListener("touchmove",function(e){if(!drag||touchId===null)return;e.preventDefault();for(var i=0;i<e.changedTouches.length;i++){var t=e.changedTouches[i];if(t.identifier===touchId){queue(t.clientY);break;}}},{passive:false});
+  thumb.addEventListener("touchend",function(e){if(touchId===null)return;for(var i=0;i<e.changedTouches.length;i++)if(e.changedTouches[i].identifier===touchId){end();break;}},{passive:false});
+  thumb.addEventListener("touchcancel",end,{passive:false});
+  thumb.addEventListener("mousedown",function(e){if(e.button!==0)return;e.preventDefault();begin(e.clientY);});
+  window.addEventListener("mousemove",function(e){if(drag&&touchId===null){e.preventDefault();queue(e.clientY);}},{passive:false});
+  window.addEventListener("mouseup",function(){if(drag&&touchId===null)end();});
+  window.addEventListener("scroll",function(){update(true);},{passive:true});
+  window.addEventListener("resize",function(){if(!drag)update(false);});
+  window.addEventListener("orientationchange",function(){if(!drag)setTimeout(function(){update(false);},250);});
+  if(window.ResizeObserver){var ro=new ResizeObserver(function(){if(!drag)update(false);});ro.observe(de);ro.observe(db);}
+  setTimeout(function(){update(false);},300);
+})();
 </script>
 </body>
 </html>
