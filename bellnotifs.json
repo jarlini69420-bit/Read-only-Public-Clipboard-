@@ -205,18 +205,23 @@
     "ts": 1795747819329
   },
   {
-    "id": "mwywh8z4rrzb",
-    "text": "Fixed (21) Autohitch having a large detection radius around the beefalo. Works great now on ipads and tablets. Now smaller screens might have some difficulty, just tap accurately or dont update this cmd to your macro",
-    "ts": 1795779047344
-  },
-  {
     "id": "mwywhvq23l2q",
     "text": "Updated (20) Minimap to recenter on initial run and after every map close. It has been quite annoying manually recentering them by opening and closing the map again.",
     "ts": 1795779076826
   },
   {
     "id": "mwz1ofpbqqbe",
-    "text": "Added Scrollbars for macro manager and clipboard",
+    "text": "Added Scrollbars for macro manager and clipboard. Removed native scrollbar from mw manager page",
     "ts": 1795787780735
+  },
+  {
+    "id": "mx058gtqi0ii",
+    "text": "Added (21) new part Better beefalo detection. Disregard if its working fine on your end. Use macro manager to add a new line above part 5(now 6)",
+    "ts": 1795854220334
+  },
+  {
+    "id": "mx059n1gaofw",
+    "text": "Added [T2-T4] new test server commands for anyone also testing commands.",
+    "ts": 1795854275045
   }
 ]

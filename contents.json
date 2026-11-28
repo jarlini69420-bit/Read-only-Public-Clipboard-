@@ -637,6 +637,13 @@
         "placer": false
       },
       {
+        "id": "part-mx04wzvs-8cbda",
+        "label": "Detect beefalo better",
+        "mode": "local",
+        "text": "function MW_TP(x,y,mv) local P=ThePlayer if not P._bw or mv>45 or TheInput:GetHUDEntityAtPoint(x,y) then return end local ok,t=pcall(TheSim.GetEntitiesAtScreenPoint,TheSim,x,y) if not(ok and type(t)==[[table]]) then return end for _,e in ipairs(t) do if e~=P and e:IsValid() then if e.prefab==[[beefalo]] then local o,n=pcall(function() return e.Network:GetNetworkID() end) if o and n then local wx,_,wz=e.Transform:GetWorldPosition() P._bw(e,n,wx,wz) end end return end end end --M",
+        "placer": false
+      },
+      {
         "id": "part-72",
         "label": "Create touch controls and manage hitch interactions",
         "mode": "local",
@@ -986,23 +993,9 @@
     ]
   },
   {
-    "id": "clip-112",
-    "number": "",
-    "label": "SAMPLE PROMPT TO UPDATE BUTTON COMMANDS",
-    "description": "Prompt template for updating button commands using a screenshot and the command to change.",
-    "parts": [
-      {
-        "id": "part-112",
-        "mode": "",
-        "text": "Hey! I need help adjusting the coordinate values for a custom Don't Starve Together mobile console command. Because of my device's resolution and HUD scale, the virtual buttons/UI elements created by this script aren't aligning correctly with my screen. Here is my current one-liner command: [PASTE YOUR FULL COMMAND STRING HERE] I’ve attached a screenshot of my DST mobile game in-case you need to reference the layout. Can you calculate the math for the new positions/sizes and rewrite this into an updated, single-line command string that I can copy and paste directly into the game console?",
-        "placer": false
-      }
-    ]
-  },
-  {
     "id": "clip-35",
-    "number": "",
-    "label": "M1 WURT TP ALL STRANDED MERMS BACK TO THEIR HOMES",
+    "number": "M1",
+    "label": "WURT TP ALL STRANDED MERMS BACK TO THEIR HOMES",
     "description": "Recommended for Caves.",
     "parts": [
       {
@@ -1015,8 +1008,8 @@
   },
   {
     "id": "clip-96",
-    "number": "",
-    "label": "M2 PREVENT OTHER CHARACTERS FROM PICKING UP WINBOT",
+    "number": "M2",
+    "label": "PREVENT OTHER CHARACTERS FROM PICKING UP WINBOT",
     "parts": [
       {
         "id": "part-96",
@@ -1028,8 +1021,8 @@
   },
   {
     "id": "clip-97",
-    "number": "",
-    "label": "M3 MANUALLY SAVE",
+    "number": "M4",
+    "label": "MANUALLY SAVE",
     "description": "For players experiencing the disconnect-freezing bug.",
     "parts": [
       {
@@ -1042,8 +1035,8 @@
   },
   {
     "id": "clip-98",
-    "number": "",
-    "label": "M4 ONE-TAP OPEN CONSOLE",
+    "number": "M4",
+    "label": "ONE-TAP OPEN CONSOLE",
     "description": "Requires manual positioning over the day clock.",
     "parts": [
       {
@@ -1056,8 +1049,8 @@
   },
   {
     "id": "clip-99",
-    "number": "",
-    "label": "M5 HIDE UI BY TAPPING HUNGER BADGE",
+    "number": "M5",
+    "label": "HIDE UI BY TAPPING HUNGER BADGE",
     "description": "Tap the hunger badge to hide the UI; tap anywhere to show it again for clean screenshots.",
     "parts": [
       {
@@ -1070,8 +1063,8 @@
   },
   {
     "id": "clip-100",
-    "number": "",
-    "label": "M6 ZOOM OUT FURTHER AND HIDE LEAF OVERLAY BY TAPPING HEART BADGE",
+    "number": "M6",
+    "label": "ZOOM OUT FURTHER AND HIDE LEAF OVERLAY BY TAPPING HEART BADGE",
     "parts": [
       {
         "id": "part-100",
@@ -1083,8 +1076,8 @@
   },
   {
     "id": "clip-37",
-    "number": "",
-    "label": "M7 PLAYER TEMPERATURE",
+    "number": "M7",
+    "label": "PLAYER TEMPERATURE",
     "parts": [
       {
         "id": "part-37",
@@ -1096,13 +1089,75 @@
   },
   {
     "id": "clip-113",
-    "number": "",
-    "label": "T1 GODMODE AND FREE CRAFTING",
+    "number": "T1",
+    "label": "GODMODE AND FREE CRAFTING",
     "parts": [
       {
         "id": "part-113",
         "mode": "remote",
         "text": "p=ThePlayer b=p.components.builder b:GiveAllRecipes() b.freebuildmode=true p.components.health:SetInvincible(true) p.components.health:SetPercent(1) p.components.hunger:SetPercent(1) p.components.hunger:Pause(true) p.components.sanity:SetPercent(1) p.components.sanity:SetRate(0)\n--RUN",
+        "placer": false
+      }
+    ]
+  },
+  {
+    "id": "clip-mwzn9cqo-yus67",
+    "number": "T2",
+    "label": "BEEFALO BELL, SADDLE AND INSTANT DOMESTICATION",
+    "parts": [
+      {
+        "id": "part-mwzn9cqo-e28bg",
+        "mode": "remote",
+        "text": "local p=ThePlayer c_give(\"beef_bell\",1) c_give(\"saddle_basic\",1) c_spawn(\"beefalo\",1) p:DoTaskInTime(.5,function() local x,_,z=p.Transform:GetWorldPosition() local b,d for _,e in ipairs(TheSim:FindEntities(x,0,z,30,{\"_health\"},{\"INLIMBO\"})) do if e.prefab==\"beefalo\" then local q=e:GetDistanceSqToPoint(x,0,z) if not d or q<d then b,d=e,q end end end if b then local c=b.components.domesticatable if c then pcall(function() c:SetDomestication(1) end) pcall(function() c:BecomeDomesticated() end) c.domestication=1 c.tendency=\"DEFAULT\" end end end) --RUN",
+        "placer": false
+      }
+    ]
+  },
+  {
+    "id": "clip-mwzsqa5z-nxpjb",
+    "number": "T3",
+    "label": "CLEANER EYE",
+    "parts": [
+      {
+        "id": "part-mwzsqa65-jdpf4",
+        "label": "Spawn eyeplant that follows and eats items around you except for Moon Rock Idols",
+        "mode": "remote",
+        "text": "local p=ConsoleCommandPlayer() or ThePlayer or AllPlayers[1] local e=p and SpawnPrefab([[eyeplant]]) if e then e.Transform:SetPosition(p.Transform:GetWorldPosition()) e.AnimState:SetDeltaTimeMultiplier(4) e:SetBrain(nil) e.components.combat:SetRetargetFunction(999,function() return nil end) e.components.combat:SetTarget(nil) e:AddTag([[notarget]]) e:DoPeriodicTask(.05,function() if not e:IsValid() then return end local x,y,z=e.Transform:GetWorldPosition() local ents=TheSim:FindEntities(x,y,z,25,{[[_inventoryitem]]},{[[INLIMBO]],[[NOCLICK]],[[irreplaceable]]}) local t=p for _,v in ipairs(ents) do if not v.prefab:find([[moon]]) and not v.prefab:find([[turf_]]) then t=v break end end local tx,ty,tz=t.Transform:GetWorldPosition() local d=math.sqrt((tx-x)^2+(tz-z)^2) if t~=p and d<1.5 then t:Remove() if e.sg and not e.sg:HasStateTag([[attack]]) then e.sg:GoToState([[attack]]) end elseif d>(t==p and 4 or 1) then e.Transform:SetPosition(x+(tx-x)/d*.7,0,z+(tz-z)/d*.7) end end) end --RUN",
+        "placer": false
+      },
+      {
+        "id": "part-mwzuiznq-q08fo",
+        "label": "Remove the closest eyeplant",
+        "mode": "remote",
+        "text": "local e=FindClosestEntity(ConsoleCommandPlayer(),30,true,{[[eyeplant]]}) if e then e:Remove() end --RUN",
+        "placer": false
+      }
+    ]
+  },
+  {
+    "id": "clip-mwzwwpoi-8l1yp",
+    "number": "T4",
+    "label": "CHARACTER SWAPPING SETUP",
+    "parts": [
+      {
+        "id": "part-mwzwwpoi-z6lxa",
+        "label": "Transform Florid Postern to Celestial Portal",
+        "mode": "remote",
+        "text": "local p=ThePlayer or ConsoleCommandPlayer() or AllPlayers[1] local t=p and FindClosestEntity(p,9999,true,{[[multiplayer_portal]]}) if t then local x,y,z=t.Transform:GetWorldPosition() t:Remove() local c=SpawnPrefab([[multiplayer_portal_moonrock]]) if c then c.Transform:SetPosition(x,y,z) end else print([[NO POSTERN]]) end --M",
+        "placer": false
+      },
+      {
+        "id": "part-mwzwxenq-ymeln",
+        "label": "Spawn 67 Moon Rock Idols",
+        "mode": "remote",
+        "text": "local p=ThePlayer or ConsoleCommandPlayer() or AllPlayers[1] if not p then print([[NO PLAYER]]) else local x,y,z=p.Transform:GetWorldPosition() print([[SPAWNING AT]],x,z) local pts={{-3.5,2.5},{-4.3,2.1},{-4.8,1.2},{-5,0},{-5,-1.2},{-4.7,-2.2},{-4,-2.7},{-3.2,-2.6},{-2.6,-2},{-2.5,-1.1},{-2.8,-.3},{-3.5,0},{-4.3,-.2},{-4.8,-.8},{.5,2.7},{1.5,2.7},{2.5,2.7},{3.5,2.7},{4.3,2.5},{4.6,1.8},{4.3,.9},{3.7,.1},{3.1,-.8},{2.6,-1.7},{2.3,-2.7}} for i=1,67 do local e=SpawnPrefab([[moonrockidol]]) if e then local b=pts[(i-1)%#pts+1] local j=i>#pts and .28 or 0 e.Transform:SetPosition(x+b[1]+(j>0 and math.cos(i)*j or 0),0,z+b[2]+(j>0 and math.sin(i)*j or 0)) end end end --RUN",
+        "placer": false
+      },
+      {
+        "id": "part-mwzx2ffp-lkx5s",
+        "label": "Delete nearby idols",
+        "mode": "remote",
+        "text": "local p=ThePlayer or ConsoleCommandPlayer() or AllPlayers[1] local x,y,z=p.Transform:GetWorldPosition() local n=0 for _,v in ipairs(TheSim:FindEntities(x,y,z,100)) do if v.prefab==[[moonrockidol]] then v:Remove() n=n+1 end end --RUN",
         "placer": false
       }
     ]
